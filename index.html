@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta
+    name="description"
+    content="Dashboard IoT MQTT real-time dengan widget yang dapat diatur"
+  >
+  <title>IoT Control Center</title>
+
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0d1b2d;
+      --panel-2: #12243a;
+      --panel-3: #091626;
+      --border: #213750;
+      --text: #e5edf7;
+      --muted: #8fa5bd;
+      --primary: #22d3ee;
+      --danger: #fb7185;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --shadow: 0 14px 35px rgba(0, 0, 0, .22);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(34, 211, 238, .07),
+          transparent 35%
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .container {
+      width: min(1600px, 100%);
+      margin: auto;
+      padding: 20px 24px 32px;
+    }
+
+    /* ===================== HEADER ===================== */
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      color: #06101c;
+      font-size: 25px;
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(34, 211, 238, .18);
+    }
+
+    h1 {
+      font-size: 1.35rem;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .connection-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(251, 113, 133, .1);
+    }
+
+    .connection-status.connected .status-dot {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(52, 211, 153, .12);
+    }
+
+    .connection-status.connecting .status-dot {
+      background: var(--warning);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      to {
+        opacity: .35;
+      }
+    }
+
+    /* ===================== BUTTON & FORM ===================== */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #06202a;
+      font-weight: 750;
+      transition:
+        transform .15s,
+        filter .15s,
+        background .15s;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      border-color: var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      border-color: rgba(251, 113, 133, .35);
+      background: rgba(251, 113, 133, .12);
+      color: var(--danger);
+    }
+
+    .btn-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn-icon:hover {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      background: var(--panel-3);
+      color: var(--text);
+      transition:
+        border-color .2s,
+        box-shadow .2s;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, .1);
+    }
+
+    input[type="color"] {
+      padding: 4px;
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      min-height: 16px;
+      accent-color: var(--primary);
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 42px;
+      color: var(--text);
+      font-size: .85rem;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+
+    /* ===================== DASHBOARD ===================== */
+
+    .dashboard-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-auto-rows: 8px;
+      grid-auto-flow: dense;
+      column-gap: 16px;
+      row-gap: 8px;
+      min-height: 300px;
+    }
+
+    .widget {
+      position: relative;
+      display: flex;
+      grid-column: span var(--widget-width, 4);
+      grid-row: span var(--widget-height, 30);
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(13, 27, 45, .96);
+      box-shadow: var(--shadow);
+      transition:
+        border-color .2s,
+        opacity .2s;
+    }
+
+    .widget:hover {
+      border-color: #34516f;
+    }
+
+    .widget.resizing {
+      border-color: var(--primary);
+      user-select: none;
+    }
+
+    .widget-header {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 36, 58, .55);
+    }
+
+    .drag-handle {
+      flex: 0 0 auto;
+      color: var(--muted);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      letter-spacing: -2px;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .widget-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(34, 211, 238, .08);
+      font-size: 1.15rem;
+    }
+
+    .widget-heading {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .widget-heading h3 {
+      overflow: hidden;
+      font-size: .9rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .widget-topic {
+      display: block;
+      overflow: hidden;
+      margin-top: 3px;
+      color: var(--muted);
+      font-family:
+        ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .68rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .widget-actions {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 5px;
+    }
+
+    .widget-body {
+      display: flex;
+      flex: 1 1 auto;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .widget-footer {
+      display: flex;
+      flex: 0 0 auto;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 28px 9px 14px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .resize-handle {
+      position: absolute;
+      right: 4px;
+      bottom: 3px;
+      z-index: 5;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: nwse-resize;
+      touch-action: none;
+    }
+
+    .resize-handle::after {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      content: "";
+    }
+
+    .resize-handle:hover {
+      color: var(--primary);
+    }
+
+    .sortable-ghost {
+      opacity: .35;
+    }
+
+    .empty-state {
+      display: grid;
+      grid-column: 1 / -1;
+      place-items: center;
+      min-height: 320px;
+      padding: 45px 20px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      margin-bottom: 12px;
+      font-size: 2.5rem;
+    }
+
+    .empty-state p {
+      margin: 7px 0 18px;
+    }
+
+    /* ===================== LABEL ===================== */
+
+    .label-value {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      color: var(--primary);
+      font-size: clamp(1.5rem, 4vw, 2.35rem);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    /* ===================== GAUGE ===================== */
+
+    .gauge {
+      width: min(260px, 100%);
+      text-align: center;
+    }
+
+    .gauge svg {
+      display: block;
+      width: 100%;
+      max-height: 155px;
+    }
+
+    .gauge-progress {
+      transition: stroke-dashoffset .35s ease;
+    }
+
+    .gauge-value {
+      margin-top: -20px;
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .unit {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 500;
+    }
+
+    /* ===================== LEVEL HORIZONTAL ===================== */
+
+    .level-container {
+      width: 100%;
+    }
+
+    .level-value {
+      margin-bottom: 14px;
+      font-size: 2rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .level-track {
+      height: 24px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #07111f;
+    }
+
+    .level-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      transition: width .35s ease;
+    }
+
+    .level-range {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    /* ===================== LEVEL VERTICAL ===================== */
+
+    .vertical-level {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      min-height: 190px;
+    }
+
+    .vertical-level .level-value {
+      margin-bottom: 10px;
+      font-size: 1.65rem;
+    }
+
+    .vertical-level-main {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 145px;
+    }
+
+    .vertical-range {
+      display: flex;
+      align-self: stretch;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3px 0;
+      color: var(--muted);
+      font-size: .68rem;
+      text-align: right;
+    }
+
+    .vertical-track {
+      position: relative;
+      width: 54px;
+      height: 100%;
+      min-height: 145px;
+      max-height: 260px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #07111f;
+    }
+
+    .vertical-fill {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 0;
+      border-radius: 12px;
+      transition: height .35s ease;
+    }
+
+    /* ===================== CHART ===================== */
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 170px;
+    }
+
+    /* ===================== DIALOG ===================== */
+
+    dialog {
+      width: min(540px, calc(100% - 28px));
+      max-height: calc(100dvh - 36px);
+      padding: 0;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, .55);
+    }
+
+    dialog::backdrop {
+      background: rgba(1, 7, 15, .75);
+      backdrop-filter: blur(4px);
+    }
+
+    .dialog-header,
+    .dialog-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 18px;
+    }
+
+    .dialog-header {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dialog-header h2 {
+      font-size: 1rem;
+    }
+
+    .dialog-body {
+      padding: 18px;
+    }
+
+    .dialog-footer {
+      justify-content: flex-end;
+      border-top: 1px solid var(--border);
+    }
+
+    .form-hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: .75rem;
+      line-height: 1.55;
+    }
+
+    /* ===================== CHAT DRAWER ===================== */
+
+    .chat-dialog {
+      width: min(450px, 100%);
+      max-width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      margin: 0 0 0 auto;
+      overflow: hidden;
+      border-radius: 16px 0 0 16px;
+    }
+
+    .chat-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-header {
+      flex: 0 0 auto;
+    }
+
+    .chat-header-info {
+      min-width: 0;
+    }
+
+    .chat-header-info p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .chat-messages {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+      padding: 18px;
+      overflow-y: auto;
+      background: #091522;
+    }
+
+    .chat-empty {
+      margin: auto;
+      color: var(--muted);
+      font-size: .82rem;
+      text-align: center;
+    }
+
+    .chat-message {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-width: 88%;
+    }
+
+    .chat-message.outgoing {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .chat-topic {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-family:
+        ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .65rem;
+      overflow-wrap: anywhere;
+    }
+
+    .chat-bubble {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 13px 13px 13px 4px;
+      background: var(--panel-2);
+      font-family:
+        ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .8rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .outgoing .chat-bubble {
+      border-color: rgba(34, 211, 238, .3);
+      border-radius: 13px 13px 4px 13px;
+      background: rgba(34, 211, 238, .13);
+      color: #d9fbff;
+    }
+
+    .chat-time {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .62rem;
+    }
+
+    .chat-compose {
+      flex: 0 0 auto;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .chat-compose .form-grid {
+      gap: 9px;
+    }
+
+    .chat-compose textarea {
+      min-height: 68px;
+      max-height: 150px;
+    }
+
+    .chat-compose-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .chat-options {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-options select {
+      width: 68px;
+    }
+
+    .chat-options .checkbox-label {
+      min-height: auto;
+      white-space: nowrap;
+    }
+
+    /* ===================== TOAST ===================== */
+
+    .toast-container {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 100;
+      display: grid;
+      gap: 8px;
+      width: min(360px, calc(100% - 36px));
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 10px;
+      background: #102238;
+      box-shadow: var(--shadow);
+      font-size: .82rem;
+      animation: slide-in .2s ease-out;
+    }
+
+    .toast.error {
+      border-left-color: var(--danger);
+    }
+
+    @keyframes slide-in {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+    }
+
+    /* ===================== RESPONSIVE ===================== */
+
+    @media (max-width: 1100px) {
+      .dashboard {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .widget {
+        grid-column: span 6 !important;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        padding: 16px 14px 24px;
+      }
+
+      .app-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .header-actions {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .widget {
+        grid-column: 1 !important;
+        min-height: 390px;
+      }
+
+      .resize-handle {
+        display: none;
+      }
+
+      .dashboard-info span:last-child {
+        display: none;
+      }
+
+      .chat-dialog {
+        border-radius: 0;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      h1 {
+        font-size: 1.15rem;
+      }
+
+      .header-actions .btn {
+        padding: 8px 11px;
+      }
+
+      .connection-status {
+        order: 4;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full,
+      .full-width {
+        grid-column: auto;
+      }
+
+      .widget-actions .btn-icon {
+        width: 30px;
+        min-width: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">⌁</div>
+        <div>
+          <h1>IoT Control Center</h1>
+          <p class="subtitle">Monitoring MQTT real-time</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button
+          id="statusButton"
+          class="connection-status"
+          type="button"
+          title="Buka pengaturan broker"
+        >
+          <span class="status-dot"></span>
+          <span id="statusText">Belum terhubung</span>
+        </button>
+
+        <button
+          id="openChatBtn"
+          class="btn btn-secondary"
+          type="button"
+          title="Publish dan monitor pesan"
+        >
+          💬 <span>Pesan</span>
+        </button>
+
+        <button
+          id="openBrokerBtn"
+          class="btn btn-secondary"
+          type="button"
+        >
+          ⚙ <span>Broker</span>
+        </button>
+
+        <button
+          id="addWidgetBtn"
+          class="btn"
+          type="button"
+        >
+          ＋ <span>Widget</span>
+        </button>
+      </div>
+    </header>
+
+    <section>
+      <div class="dashboard-info">
+        <span>Geser widget melalui ikon ⋮⋮ untuk mengatur posisi.</span>
+        <span>Ubah ukuran melalui handle di sudut kanan bawah widget.</span>
+      </div>
+
+      <div id="dashboard" class="dashboard"></div>
+    </section>
+  </main>
+
+  <!-- Pengaturan broker -->
+  <dialog id="brokerDialog">
+    <form id="brokerForm">
+      <div class="dialog-header">
+        <h2>Pengaturan Broker MQTT</h2>
+        <button
+          class="btn-icon close-dialog"
+          type="button"
+          data-dialog="brokerDialog"
+          aria-label="Tutup"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="brokerUrl">WebSocket URL</label>
+            <input
+              id="brokerUrl"
+              value="wss://broker.emqx.io:8084/mqtt"
+              placeholder="wss://broker.example.com:8084/mqtt"
+              autocomplete="off"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="username">Username (opsional)</label>
+            <input id="username" autocomplete="username">
+          </div>
+
+          <div class="field">
+            <label for="password">Password (opsional)</label>
+            <input
+              id="password"
+              type="password"
+              autocomplete="current-password"
+            >
+          </div>
+
+          <div class="field full">
+            <label for="clientId">Client ID</label>
+            <input id="clientId" autocomplete="off">
+          </div>
+
+          <button
+            id="connectBtn"
+            class="btn full-width"
+            type="submit"
+          >
+            Hubungkan ke Broker
+          </button>
+        </div>
+
+        <p class="form-hint">
+          Browser memerlukan MQTT melalui WebSocket. ESP32 dapat tetap
+          menggunakan MQTT TCP port 1883 menuju broker yang sama.
+          Password tidak disimpan di browser.
+        </p>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Publish dan pesan masuk -->
+  <dialog id="chatDialog" class="chat-dialog">
+    <div class="chat-layout">
+      <div class="dialog-header chat-header">
+        <div class="chat-header-info">
+          <h2>Pesan MQTT</h2>
+          <p>Pesan keluar dan pesan masuk dari topik widget</p>
+        </div>
+
+        <button
+          class="btn-icon close-dialog"
+          type="button"
+          data-dialog="chatDialog"
+          aria-label="Tutup"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div id="chatMessages" class="chat-messages">
+        <div class="chat-empty">
+          Belum ada pesan.<br>
+          Hubungkan broker lalu kirim atau terima data.
+        </div>
+      </div>
+
+      <form id="publishForm" class="chat-compose">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="publishTopic">Topik</label>
+            <input
+              id="publishTopic"
+              placeholder="demo/iot/suhu"
+              autocomplete="off"
+              required
+            >
+          </div>
+
+          <div class="field full">
+            <label for="publishPayload">Payload</label>
+            <textarea
+              id="publishPayload"
+              placeholder='27.5 atau {"value":27.5}'
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="chat-compose-bottom">
+          <div class="chat-options">
+            <select id="publishQos" title="QoS">
+              <option value="0">QoS 0</option>
+              <option value="1">QoS 1</option>
+              <option value="2">QoS 2</option>
+            </select>
+
+            <label class="checkbox-label">
+              <input id="publishRetain" type="checkbox">
+              Retain
+            </label>
+          </div>
+
+          <button class="btn" type="submit">Kirim ➤</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Tambah/edit widget -->
+  <dialog id="widgetDialog">
+    <form id="widgetForm">
+      <div class="dialog-header">
+        <h2 id="dialogTitle">Tambah Widget</h2>
+        <button
+          class="btn-icon close-dialog"
+          type="button"
+          data-dialog="widgetDialog"
+          aria-label="Tutup"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <input id="widgetId" type="hidden">
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="widgetTitle">Nama widget</label>
+            <input
+              id="widgetTitle"
+              required
+              placeholder="Suhu Ruangan"
+            >
+          </div>
+
+          <div class="field">
+            <label for="widgetType">Jenis widget</label>
+            <select id="widgetType">
+              <option value="gauge">Gauge</option>
+              <option value="label">Label</option>
+              <option value="level">Level horizontal</option>
+              <option value="verticalLevel">Level vertikal</option>
+              <option value="chart">Grafik</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label for="widgetTopic">Topik subscribe</label>
+            <input
+              id="widgetTopic"
+              required
+              placeholder="sensor/ruangan/suhu"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="field">
+            <label for="widgetIcon">Ikon</label>
+            <select id="widgetIcon">
+              <option value="🌡️">🌡️ Suhu</option>
+              <option value="💧">💧 Air/kelembapan</option>
+              <option value="🪣">🪣 Tangki</option>
+              <option value="📈">📈 Grafik</option>
+              <option value="📟">📟 Data</option>
+              <option value="⚡">⚡ Listrik</option>
+              <option value="🔋">🔋 Baterai</option>
+              <option value="💡">💡 Lampu</option>
+              <option value="🌀">🌀 Kipas</option>
+              <option value="🌱">🌱 Tanaman</option>
+              <option value="🏭">🏭 Mesin</option>
+              <option value="📡">📡 Sensor</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="widgetColor">Warna</label>
+            <input
+              id="widgetColor"
+              type="color"
+              value="#22d3ee"
+            >
+          </div>
+
+          <div class="field">
+            <label for="widgetMin">Nilai minimum</label>
+            <input
+              id="widgetMin"
+              type="number"
+              step="any"
+              value="0"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="widgetMax">Nilai maksimum</label>
+            <input
+              id="widgetMax"
+              type="number"
+              step="any"
+              value="100"
+              required
+            >
+          </div>
+
+          <div class="field full">
+            <label for="widgetUnit">Satuan</label>
+            <input
+              id="widgetUnit"
+              placeholder="°C, %, ppm, volt"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          class="btn btn-secondary close-dialog"
+          type="button"
+          data-dialog="widgetDialog"
+        >
+          Batal
+        </button>
+        <button class="btn" type="submit">Simpan Widget</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div
+    id="toastContainer"
+    class="toast-container"
+    aria-live="polite"
+  ></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <script>
+    "use strict";
+
+    const $ = selector => document.querySelector(selector);
+    const dashboard = $("#dashboard");
+    const widgetDialog = $("#widgetDialog");
+
+    const STORAGE_KEY = "iot-dashboard-widgets-v2";
+    const OLD_STORAGE_KEY = "iot-dashboard-widgets-v1";
+    const MAX_CHART_POINTS = 30;
+    const MAX_CHAT_MESSAGES = 100;
+
+    const state = {
+      client: null,
+      connected: false,
+      widgets: [],
+      subscribed: new Set()
+    };
+
+    const uid = () =>
+      globalThis.crypto?.randomUUID?.() ||
+      `widget-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    function defaultSize(type) {
+      switch (type) {
+        case "chart":
+          return { w: 6, h: 32 };
+        case "verticalLevel":
+          return { w: 3, h: 32 };
+        case "label":
+          return { w: 3, h: 24 };
+        default:
+          return { w: 4, h: 28 };
+      }
+    }
+
+    function defaultIcon(type) {
+      const icons = {
+        gauge: "🌡️",
+        label: "📟",
+        level: "💧",
+        verticalLevel: "🪣",
+        chart: "📈"
+      };
+
+      return icons[type] || "📡";
+    }
+
+    function defaultWidgets() {
+      return [
+        {
+          id: uid(),
+          title: "Suhu Ruangan",
+          type: "gauge",
+          topic: "demo/iot/suhu",
+          icon: "🌡️",
+          min: 0,
+          max: 100,
+          unit: "°C",
+          color: "#22d3ee",
+          ...defaultSize("gauge")
+        },
+        {
+          id: uid(),
+          title: "Level Tangki",
+          type: "verticalLevel",
+          topic: "demo/iot/level",
+          icon: "🪣",
+          min: 0,
+          max: 100,
+          unit: "%",
+          color: "#34d399",
+          ...defaultSize("verticalLevel")
+        },
+        {
+          id: uid(),
+          title: "Grafik Kelembapan",
+          type: "chart",
+          topic: "demo/iot/kelembapan",
+          icon: "📈",
+          min: 0,
+          max: 100,
+          unit: "%",
+          color: "#818cf8",
+          ...defaultSize("chart")
+        }
+      ];
+    }
+
+    function normalizeWidget(widget) {
+      const type = [
+        "gauge",
+        "label",
+        "level",
+        "verticalLevel",
+        "chart"
+      ].includes(widget.type)
+        ? widget.type
+        : "label";
+
+      const size = defaultSize(type);
+      const min = Number(widget.min);
+      const max = Number(widget.max);
+
+      return {
+        id: widget.id || uid(),
+        title: String(widget.title || "Widget"),
+        type,
+        topic: String(widget.topic || ""),
+        icon: String(widget.icon || defaultIcon(type)),
+        min: Number.isFinite(min) ? min : 0,
+        max: Number.isFinite(max) && max > min ? max : 100,
+        unit: String(widget.unit || ""),
+        color: /^#[0-9a-f]{6}$/i.test(widget.color)
+          ? widget.color
+          : "#22d3ee",
+        w: Math.max(
+          2,
+          Math.min(12, Number(widget.w) || size.w)
+        ),
+        h: Math.max(
+          20,
+          Math.min(60, Number(widget.h) || size.h)
+        )
+      };
+    }
+
+    function showToast(message, type = "info") {
+      const toast = document.createElement("div");
+      toast.className =
+        `toast ${type === "error" ? "error" : ""}`;
+      toast.textContent = message;
+
+      $("#toastContainer").appendChild(toast);
+      setTimeout(() => toast.remove(), 4500);
+    }
+
+    function setStatus(mode, text) {
+      const status = $("#statusButton");
+      status.className = `connection-status ${mode}`;
+      $("#statusText").textContent = text;
+    }
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("id-ID", {
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function saveWidgets() {
+      const configs = state.widgets.map(widget => ({
+        id: widget.id,
+        title: widget.title,
+        type: widget.type,
+        topic: widget.topic,
+        icon: widget.icon,
+        min: widget.min,
+        max: widget.max,
+        unit: widget.unit,
+        color: widget.color,
+        w: widget.w,
+        h: widget.h
+      }));
+
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(configs)
+        );
+      } catch (error) {
+        console.warn("Konfigurasi tidak dapat disimpan:", error);
+        showToast(
+          "Konfigurasi widget tidak dapat disimpan.",
+          "error"
+        );
+      }
+    }
+
+    function loadWidgets() {
+      try {
+        const saved =
+          localStorage.getItem(STORAGE_KEY) ||
+          localStorage.getItem(OLD_STORAGE_KEY);
+
+        const parsed = saved ? JSON.parse(saved) : null;
+
+        state.widgets =
+          Array.isArray(parsed) && parsed.length
+            ? parsed.map(normalizeWidget)
+            : defaultWidgets();
+      } catch {
+        state.widgets = defaultWidgets();
+      }
+    }
+
+    function applyWidgetSize(widget) {
+      if (!widget.el) return;
+
+      widget.el.style.setProperty(
+        "--widget-width",
+        widget.w
+      );
+      widget.el.style.setProperty(
+        "--widget-height",
+        widget.h
+      );
+    }
+
+    function createWidgetElement(widget) {
+      const article = document.createElement("article");
+      article.className = "widget";
+      article.dataset.id = widget.id;
+
+      article.innerHTML = `
+        <header class="widget-header">
+          <span
+            class="drag-handle"
+            title="Geser widget"
+            aria-label="Geser widget"
+          >⋮⋮</span>
+
+          <span class="widget-icon"></span>
+
+          <div class="widget-heading">
+            <h3></h3>
+            <span class="widget-topic"></span>
+          </div>
+
+          <div class="widget-actions">
+            <button
+              class="btn-icon edit-widget"
+              type="button"
+              title="Edit widget"
+            >✎</button>
+
+            <button
+              class="btn-icon delete-widget"
+              type="button"
+              title="Hapus widget"
+            >✕</button>
+          </div>
+        </header>
+
+        <div class="widget-body"></div>
+
+        <footer class="widget-footer">
+          <span class="widget-state">Menunggu data…</span>
+          <span class="last-update">—</span>
+        </footer>
+
+        <button
+          class="resize-handle"
+          type="button"
+          title="Ubah ukuran widget"
+          aria-label="Ubah ukuran widget"
+        ></button>
+      `;
+
+      article.querySelector(".widget-icon").textContent =
+        widget.icon;
+      article.querySelector("h3").textContent =
+        widget.title;
+      article.querySelector(".widget-topic").textContent =
+        widget.topic;
+
+      const body = article.querySelector(".widget-body");
+
+      if (widget.type === "gauge") {
+        body.innerHTML = `
+          <div class="gauge">
+            <svg viewBox="0 0 200 115" aria-hidden="true">
+              <path
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                fill="none"
+                stroke="#213750"
+                stroke-width="15"
+                stroke-linecap="round"
+              />
+              <path
+                class="gauge-progress"
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                pathLength="100"
+                fill="none"
+                stroke="${widget.color}"
+                stroke-width="15"
+                stroke-linecap="round"
+                stroke-dasharray="100"
+                stroke-dashoffset="100"
+              />
+            </svg>
+
+            <div class="gauge-value">
+              <span class="numeric-value">—</span>
+              <span class="unit"></span>
+            </div>
+          </div>
+        `;
+      } else if (widget.type === "level") {
+        body.innerHTML = `
+          <div class="level-container">
+            <div class="level-value">
+              <span class="numeric-value">—</span>
+              <span class="unit"></span>
+            </div>
+
+            <div class="level-track">
+              <div class="level-fill"></div>
+            </div>
+
+            <div class="level-range">
+              <span class="level-min"></span>
+              <span class="level-max"></span>
+            </div>
+          </div>
+        `;
+
+        article.querySelector(".level-fill").style.background =
+          widget.color;
+      } else if (widget.type === "verticalLevel") {
+        body.innerHTML = `
+          <div class="vertical-level">
+            <div class="level-value">
+              <span class="numeric-value">—</span>
+              <span class="unit"></span>
+            </div>
+
+            <div class="vertical-level-main">
+              <div class="vertical-range">
+                <span class="level-max"></span>
+                <span class="level-min"></span>
+              </div>
+
+              <div class="vertical-track">
+                <div class="vertical-fill"></div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        article.querySelector(".vertical-fill").style.background =
+          widget.color;
+      } else if (widget.type === "chart") {
+        body.innerHTML = `
+          <div class="chart-container">
+            <canvas aria-label="Grafik data real-time"></canvas>
+          </div>
+        `;
+      } else {
+        body.innerHTML = `
+          <div class="label-value">—</div>
+        `;
+
+        article.querySelector(".label-value").style.color =
+          widget.color;
+      }
+
+      article.querySelectorAll(".unit").forEach(element => {
+        element.textContent = widget.unit || "";
+      });
+
+      article.querySelectorAll(".level-min").forEach(element => {
+        element.textContent = widget.min;
+      });
+
+      article.querySelectorAll(".level-max").forEach(element => {
+        element.textContent = widget.max;
+      });
+
+      article
+        .querySelector(".edit-widget")
+        .addEventListener("click", () => {
+          openWidgetDialog(widget);
+        });
+
+      article
+        .querySelector(".delete-widget")
+        .addEventListener("click", () => {
+          deleteWidget(widget.id);
+        });
+
+      article
+        .querySelector(".resize-handle")
+        .addEventListener("pointerdown", event => {
+          startResize(event, widget);
+        });
+
+      widget.el = article;
+      applyWidgetSize(widget);
+      dashboard.appendChild(article);
+
+      if (widget.type === "chart") {
+        initializeChart(widget);
+      }
+    }
+
+    function initializeChart(widget) {
+      const context = widget.el
+        .querySelector("canvas")
+        .getContext("2d");
+
+      widget.chart = new Chart(context, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [{
+            label: widget.title,
+            data: [],
+            borderColor: widget.color,
+            backgroundColor: `${widget.color}22`,
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: .3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: {
+            intersect: false,
+            mode: "index"
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: context =>
+                  `${formatNumber(context.parsed.y)} ${widget.unit || ""}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#8fa5bd",
+                maxTicksLimit: 5
+              },
+              grid: {
+                color: "rgba(143,165,189,.08)"
+              }
+            },
+            y: {
+              min: widget.min,
+              max: widget.max,
+              ticks: {
+                color: "#8fa5bd"
+              },
+              grid: {
+                color: "rgba(143,165,189,.1)"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDashboard() {
+      state.widgets.forEach(widget => {
+        widget.chart?.destroy();
+        widget.chart = null;
+      });
+
+      dashboard.innerHTML = "";
+
+      if (!state.widgets.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+
+        const content = document.createElement("div");
+        content.innerHTML = `
+          <div class="empty-state-icon">📡</div>
+          <h2>Belum ada widget</h2>
+          <p>Tambahkan widget untuk mulai memonitor data IoT.</p>
+        `;
+
+        const button = document.createElement("button");
+        button.className = "btn";
+        button.type = "button";
+        button.textContent = "+ Tambah Widget";
+        button.addEventListener("click", () => {
+          openWidgetDialog();
+        });
+
+        content.appendChild(button);
+        empty.appendChild(content);
+        dashboard.appendChild(empty);
+        return;
+      }
+
+      state.widgets.forEach(createWidgetElement);
+    }
+
+    function openWidgetDialog(widget = null) {
+      $("#widgetForm").reset();
+
+      $("#widgetId").value = widget?.id || "";
+      $("#dialogTitle").textContent =
+        widget ? "Edit Widget" : "Tambah Widget";
+      $("#widgetTitle").value = widget?.title || "";
+      $("#widgetType").value = widget?.type || "gauge";
+      $("#widgetTopic").value = widget?.topic || "";
+      $("#widgetMin").value = widget?.min ?? 0;
+      $("#widgetMax").value = widget?.max ?? 100;
+      $("#widgetUnit").value = widget?.unit || "";
+      $("#widgetColor").value = widget?.color || "#22d3ee";
+      $("#widgetIcon").value =
+        widget?.icon || defaultIcon("gauge");
+
+      // Jenis tidak diubah saat edit agar data grafik tetap konsisten.
+      $("#widgetType").disabled = Boolean(widget);
+
+      widgetDialog.showModal();
+      $("#widgetTitle").focus();
+    }
+
+    function closeDialog(id) {
+      const dialog = document.getElementById(id);
+      dialog?.close();
+
+      if (id === "widgetDialog") {
+        $("#widgetType").disabled = false;
+      }
+    }
+
+    function deleteWidget(id) {
+      const widget = state.widgets.find(item => item.id === id);
+
+      if (
+        !widget ||
+        !confirm(`Hapus widget "${widget.title}"?`)
+      ) {
+        return;
+      }
+
+      state.widgets = state.widgets.filter(
+        item => item.id !== id
+      );
+
+      saveWidgets();
+      renderDashboard();
+      syncSubscriptions();
+      showToast("Widget berhasil dihapus.");
+    }
+
+    /*
+      Resize menggunakan Pointer Events sehingga dapat digunakan
+      dengan mouse maupun perangkat sentuh.
+    */
+    function startResize(event, widget) {
+      if (window.innerWidth <= 1100) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const handle = event.currentTarget;
+      const element = widget.el;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startW = widget.w;
+      const startH = widget.h;
+
+      const columnWidth =
+        (dashboard.clientWidth - 16 * 11) / 12;
+
+      handle.setPointerCapture(event.pointerId);
+      element.classList.add("resizing");
+
+      function onMove(moveEvent) {
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+
+        widget.w = Math.max(
+          2,
+          Math.min(
+            12,
+            Math.round(startW + deltaX / (columnWidth + 16))
+          )
+        );
+
+        // Satu baris grid = 8px + row-gap 8px.
+        widget.h = Math.max(
+          20,
+          Math.min(
+            60,
+            Math.round(startH + deltaY / 16)
+          )
+        );
+
+        applyWidgetSize(widget);
+        widget.chart?.resize();
+      }
+
+      function onEnd() {
+        element.classList.remove("resizing");
+
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onEnd);
+        handle.removeEventListener("pointercancel", onEnd);
+
+        saveWidgets();
+        widget.chart?.resize();
+      }
+
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onEnd);
+      handle.addEventListener("pointercancel", onEnd);
+    }
+
+    function extractPayload(raw) {
+      let display = raw.trim();
+
+      try {
+        const parsed = JSON.parse(raw);
+
+        if (
+          typeof parsed === "number" ||
+          typeof parsed === "string"
+        ) {
+          display = String(parsed);
+        } else if (parsed && typeof parsed === "object") {
+          const candidate =
+            parsed.value ?? parsed.val ?? parsed.data;
+
+          if (candidate !== undefined) {
+            display =
+              typeof candidate === "object"
+                ? JSON.stringify(candidate)
+                : String(candidate);
+          }
+        }
+      } catch {
+        // Payload bukan JSON, gunakan teks aslinya.
+      }
+
+      const numeric =
+        display !== "" ? Number(display) : NaN;
+
+      return {
+        display,
+        numeric
+      };
+    }
+
+    function updateWidget(widget, raw) {
+      const { display, numeric } = extractPayload(raw);
+      const numericWidget = [
+        "gauge",
+        "level",
+        "verticalLevel",
+        "chart"
+      ].includes(widget.type);
+
+      if (!widget.el) return;
+
+      if (numericWidget && !Number.isFinite(numeric)) {
+        widget.el.querySelector(".widget-state").textContent =
+          "Payload harus numerik";
+        return;
+      }
+
+      if (widget.type === "label") {
+        widget.el.querySelector(".label-value").textContent =
+          `${display || "—"}${widget.unit ? ` ${widget.unit}` : ""}`;
+      }
+
+      if (
+        widget.type === "gauge" ||
+        widget.type === "level" ||
+        widget.type === "verticalLevel"
+      ) {
+        const range = widget.max - widget.min;
+        const percentage = range > 0
+          ? Math.max(
+              0,
+              Math.min(
+                100,
+                ((numeric - widget.min) / range) * 100
+              )
+            )
+          : 0;
+
+        widget.el.querySelector(".numeric-value").textContent =
+          formatNumber(numeric);
+
+        if (widget.type === "gauge") {
+          widget.el
+            .querySelector(".gauge-progress")
+            .setAttribute(
+              "stroke-dashoffset",
+              String(100 - percentage)
+            );
+        } else if (widget.type === "level") {
+          widget.el.querySelector(".level-fill").style.width =
+            `${percentage}%`;
+        } else {
+          widget.el.querySelector(".vertical-fill").style.height =
+            `${percentage}%`;
+        }
+      }
+
+      if (widget.type === "chart" && widget.chart) {
+        const chart = widget.chart;
+        const dataset = chart.data.datasets[0];
+
+        chart.data.labels.push(
+          new Date().toLocaleTimeString("id-ID")
+        );
+        dataset.data.push(numeric);
+
+        if (dataset.data.length > MAX_CHART_POINTS) {
+          dataset.data.shift();
+          chart.data.labels.shift();
+        }
+
+        chart.update("none");
+      }
+
+      widget.el.querySelector(".widget-state").textContent =
+        "Data diterima";
+      widget.el.querySelector(".last-update").textContent =
+        new Date().toLocaleTimeString("id-ID");
+    }
+
+    function topicMatches(filter, topic) {
+      const filterParts = filter.split("/");
+      const topicParts = topic.split("/");
+
+      for (let i = 0; i < filterParts.length; i++) {
+        if (filterParts[i] === "#") {
+          return i === filterParts.length - 1;
+        }
+
+        if (i >= topicParts.length) return false;
+        if (filterParts[i] === "+") continue;
+        if (filterParts[i] !== topicParts[i]) return false;
+      }
+
+      return filterParts.length === topicParts.length;
+    }
+
+    function addChatMessage(direction, topic, payload) {
+      const container = $("#chatMessages");
+      container.querySelector(".chat-empty")?.remove();
+
+      const message = document.createElement("div");
+      message.className = `chat-message ${direction}`;
+
+      const topicElement = document.createElement("div");
+      topicElement.className = "chat-topic";
+      topicElement.textContent =
+        `${direction === "outgoing" ? "Ke" : "Dari"}: ${topic}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble";
+      bubble.textContent = payload;
+
+      const time = document.createElement("div");
+      time.className = "chat-time";
+      time.textContent =
+        new Date().toLocaleTimeString("id-ID");
+
+      message.append(topicElement, bubble, time);
+      container.appendChild(message);
+
+      while (container.children.length > MAX_CHAT_MESSAGES) {
+        container.firstElementChild.remove();
+      }
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function syncSubscriptions() {
+      if (!state.connected || !state.client) return;
+
+      const topics = new Set(
+        state.widgets
+          .map(widget => widget.topic)
+          .filter(Boolean)
+      );
+
+      const newTopics = [...topics].filter(
+        topic => !state.subscribed.has(topic)
+      );
+
+      const removedTopics = [...state.subscribed].filter(
+        topic => !topics.has(topic)
+      );
+
+      if (newTopics.length) {
+        state.client.subscribe(
+          newTopics,
+          { qos: 0 },
+          error => {
+            if (error) {
+              showToast(
+                `Gagal subscribe: ${error.message}`,
+                "error"
+              );
+            } else {
+              newTopics.forEach(topic => {
+                state.subscribed.add(topic);
+              });
+            }
+          }
+        );
+      }
+
+      if (removedTopics.length) {
+        state.client.unsubscribe(removedTopics, () => {
+          removedTopics.forEach(topic => {
+            state.subscribed.delete(topic);
+          });
+        });
+      }
+    }
+
+    function connectBroker() {
+      const url = $("#brokerUrl").value.trim();
+
+      if (!/^wss?:\/\//i.test(url)) {
+        showToast(
+          "URL broker harus diawali ws:// atau wss://",
+          "error"
+        );
+        return;
+      }
+
+      if (typeof mqtt === "undefined") {
+        showToast(
+          "Library MQTT gagal dimuat. Periksa koneksi internet.",
+          "error"
+        );
+        return;
+      }
+
+      setStatus("connecting", "Menghubungkan…");
+      $("#connectBtn").textContent = "Batalkan / Putuskan";
+
+      const client = mqtt.connect(url, {
+        clientId:
+          $("#clientId").value.trim() ||
+          `dashboard_${uid()}`,
+        username:
+          $("#username").value.trim() || undefined,
+        password:
+          $("#password").value || undefined,
+        clean: true,
+        reconnectPeriod: 2500,
+        connectTimeout: 10000
+      });
+
+      state.client = client;
+
+      client.on("connect", () => {
+        if (state.client !== client) return;
+
+        state.connected = true;
+        state.subscribed.clear();
+
+        setStatus("connected", "Terhubung");
+        $("#connectBtn").textContent = "Putuskan Koneksi";
+
+        syncSubscriptions();
+        showToast("Berhasil terhubung ke broker MQTT.");
+      });
+
+      client.on("message", (topic, payload) => {
+        const raw = payload.toString();
+
+        addChatMessage("incoming", topic, raw);
+
+        state.widgets
+          .filter(widget => topicMatches(widget.topic, topic))
+          .forEach(widget => updateWidget(widget, raw));
+      });
+
+      client.on("reconnect", () => {
+        if (state.client !== client) return;
+        setStatus("connecting", "Menghubungkan ulang…");
+      });
+
+      client.on("close", () => {
+        if (state.client !== client) return;
+
+        state.connected = false;
+        state.subscribed.clear();
+        setStatus("", "Terputus");
+      });
+
+      client.on("error", error => {
+        if (state.client !== client) return;
+
+        console.error("MQTT error:", error);
+        showToast(`MQTT: ${error.message}`, "error");
+      });
+    }
+
+    function disconnectBroker() {
+      if (!state.client) return;
+
+      const client = state.client;
+
+      state.client = null;
+      state.connected = false;
+      state.subscribed.clear();
+
+      client.end(true);
+
+      setStatus("", "Belum terhubung");
+      $("#connectBtn").textContent = "Hubungkan ke Broker";
+    }
+
+    /* ===================== EVENT ===================== */
+
+    $("#openBrokerBtn").addEventListener("click", () => {
+      $("#brokerDialog").showModal();
+    });
+
+    $("#statusButton").addEventListener("click", () => {
+      $("#brokerDialog").showModal();
+    });
+
+    $("#openChatBtn").addEventListener("click", () => {
+      $("#chatDialog").showModal();
+      $("#publishTopic").focus();
+    });
+
+    $("#addWidgetBtn").addEventListener("click", () => {
+      openWidgetDialog();
+    });
+
+    document
+      .querySelectorAll(".close-dialog")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          closeDialog(button.dataset.dialog);
+        });
+      });
+
+    // Klik backdrop untuk menutup dialog.
+    document.querySelectorAll("dialog").forEach(dialog => {
+      dialog.addEventListener("click", event => {
+        if (event.target === dialog) {
+          closeDialog(dialog.id);
+        }
+      });
+    });
+
+    $("#brokerForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      if (state.client) {
+        disconnectBroker();
+      } else {
+        connectBroker();
+      }
+    });
+
+    $("#publishForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      if (!state.connected || !state.client) {
+        showToast(
+          "Hubungkan ke broker terlebih dahulu.",
+          "error"
+        );
+        return;
+      }
+
+      const topic = $("#publishTopic").value.trim();
+      const payload = $("#publishPayload").value;
+
+      if (!topic) {
+        showToast(
+          "Topik publish tidak boleh kosong.",
+          "error"
+        );
+        return;
+      }
+
+      state.client.publish(
+        topic,
+        payload,
+        {
+          qos: Number($("#publishQos").value),
+          retain: $("#publishRetain").checked
+        },
+        error => {
+          if (error) {
+            showToast(
+              `Publish gagal: ${error.message}`,
+              "error"
+            );
+          } else {
+            addChatMessage("outgoing", topic, payload);
+            $("#publishPayload").value = "";
+            $("#publishPayload").focus();
+          }
+        }
+      );
+    });
+
+    // Enter mengirim pesan, Shift+Enter membuat baris baru.
+    $("#publishPayload").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        $("#publishForm").requestSubmit();
+      }
+    });
+
+    $("#widgetType").addEventListener("change", () => {
+      $("#widgetIcon").value =
+        defaultIcon($("#widgetType").value);
+    });
+
+    $("#widgetForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const id = $("#widgetId").value;
+      const min = Number($("#widgetMin").value);
+      const max = Number($("#widgetMax").value);
+      const topic = $("#widgetTopic").value.trim();
+      const type = $("#widgetType").value;
+
+      if (
+        !Number.isFinite(min) ||
+        !Number.isFinite(max) ||
+        min >= max
+      ) {
+        showToast(
+          "Nilai minimum harus lebih kecil dari maksimum.",
+          "error"
+        );
+        return;
+      }
+
+      if (!topic) {
+        showToast("Topik tidak boleh kosong.", "error");
+        return;
+      }
+
+      const existing = state.widgets.find(
+        widget => widget.id === id
+      );
+
+      const size = existing || defaultSize(type);
+
+      const config = normalizeWidget({
+        id: id || uid(),
+        title: $("#widgetTitle").value.trim(),
+        type,
+        topic,
+        icon: $("#widgetIcon").value,
+        min,
+        max,
+        unit: $("#widgetUnit").value.trim(),
+        color: $("#widgetColor").value,
+        w: size.w,
+        h: size.h
+      });
+
+      if (existing) {
+        const index = state.widgets.findIndex(
+          widget => widget.id === id
+        );
+        state.widgets[index] = config;
+      } else {
+        state.widgets.push(config);
+      }
+
+      saveWidgets();
+      renderDashboard();
+      syncSubscriptions();
+      closeDialog("widgetDialog");
+
+      showToast(
+        existing
+          ? "Widget berhasil diperbarui."
+          : "Widget berhasil ditambahkan."
+      );
+    });
+
+    // Drag & drop serta penyimpanan urutan.
+    new Sortable(dashboard, {
+      animation: 160,
+      handle: ".drag-handle",
+      ghostClass: "sortable-ghost",
+      filter: ".resize-handle",
+      preventOnFilter: false,
+      onEnd() {
+        const order = [
+          ...dashboard.querySelectorAll(".widget")
+        ].map(element => element.dataset.id);
+
+        state.widgets.sort(
+          (a, b) =>
+            order.indexOf(a.id) - order.indexOf(b.id)
+        );
+
+        saveWidgets();
+      }
+    });
+
+    // Inisialisasi.
+    $("#clientId").value =
+      `dashboard_${Math.random().toString(16).slice(2, 10)}`;
+
+    loadWidgets();
+    renderDashboard();
+  </script>
+</body>
+</html>
