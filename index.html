@@ -1,40 +1,81 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-  <meta
-    name="description"
-    content="Dashboard IoT MQTT real-time dengan widget yang dapat diatur"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0F172A">
   <title>IoT Control Center</title>
 
+  <script>
+    /* Terapkan tema sedini mungkin untuk mengurangi kedipan saat halaman dibuka. */
+    try {
+      document.documentElement.dataset.theme =
+        localStorage.getItem("iot-dashboard-theme") || "dark";
+    } catch {
+      document.documentElement.dataset.theme = "dark";
+    }
+  </script>
+
   <style>
-    :root {
-      --bg: #07111f;
-      --panel: #0d1b2d;
-      --panel-2: #12243a;
-      --panel-3: #091626;
-      --border: #213750;
-      --text: #e5edf7;
-      --muted: #8fa5bd;
-      --primary: #22d3ee;
-      --danger: #fb7185;
-      --success: #34d399;
-      --warning: #fbbf24;
-      --shadow: 0 14px 35px rgba(0, 0, 0, .22);
-      --radius: 16px;
+    :root,
+    html[data-theme="dark"] {
+      color-scheme: dark;
+
+      --bg: #0F172A;
+      --panel: #1E293B;
+      --panel-2: #27364B;
+      --panel-3: #162236;
+      --input: #111C2E;
+      --border: #334155;
+
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+
+      --primary: #0EA5E9;
+      --primary-hover: #38BDF8;
+      --on-primary: #082F49;
+      --brand-secondary: #6366F1;
+
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+
+      --shadow: 0 12px 30px rgba(0, 0, 0, .20);
+      --shadow-hover: 0 16px 38px rgba(0, 0, 0, .28);
+      --overlay: rgba(2, 6, 23, .76);
+      --grid: rgba(148, 163, 184, .11);
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+
+      --bg: #F4F6F8;
+      --panel: #FFFFFF;
+      --panel-2: #F1F5F9;
+      --panel-3: #F8FAFC;
+      --input: #F8FAFC;
+      --border: #DCE3EA;
+
+      --text: #0F172A;
+      --muted: #64748B;
+
+      --primary: #1F4E79;
+      --primary-hover: #2A6395;
+      --on-primary: #FFFFFF;
+      --brand-secondary: #35688F;
+
+      --success: #059669;
+      --warning: #D97706;
+      --danger: #DC2626;
+
+      --shadow: 0 8px 24px rgba(15, 23, 42, .07);
+      --shadow-hover: 0 14px 34px rgba(15, 23, 42, .11);
+      --overlay: rgba(15, 23, 42, .42);
+      --grid: rgba(100, 116, 139, .15);
     }
 
     * {
       box-sizing: border-box;
-    }
-
-    html {
-      color-scheme: dark;
     }
 
     body {
@@ -43,14 +84,15 @@
       background:
         radial-gradient(
           circle at top right,
-          rgba(34, 211, 238, .07),
-          transparent 35%
+          color-mix(in srgb, var(--primary) 7%, transparent),
+          transparent 34%
         ),
         var(--bg);
       color: var(--text);
       font-family:
         Inter, ui-sans-serif, system-ui, -apple-system,
         BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background-color .2s, color .2s;
     }
 
     button,
@@ -72,8 +114,18 @@
     h1,
     h2,
     h3,
+    h4,
     p {
       margin: 0;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    code {
+      color: var(--primary-hover);
+      overflow-wrap: anywhere;
     }
 
     .container {
@@ -82,7 +134,7 @@
       padding: 20px 24px 32px;
     }
 
-    /* ===================== HEADER ===================== */
+    /* ================= HEADER ================= */
 
     .app-header {
       display: flex;
@@ -106,15 +158,24 @@
       width: 46px;
       height: 46px;
       border-radius: 14px;
-      background: linear-gradient(135deg, var(--primary), #6366f1);
-      color: #06101c;
+      background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--brand-secondary)
+      );
+      color: #FFFFFF;
       font-size: 25px;
       font-weight: 900;
-      box-shadow: 0 8px 24px rgba(34, 211, 238, .18);
+      box-shadow: 0 8px 24px color-mix(
+        in srgb,
+        var(--primary) 20%,
+        transparent
+      );
     }
 
     h1 {
       font-size: 1.35rem;
+      letter-spacing: -.02em;
     }
 
     .subtitle {
@@ -137,10 +198,11 @@
       gap: 8px;
       min-height: 40px;
       padding: 8px 12px;
-      border: 1px solid var(--border);
+      border: 0;
       border-radius: 999px;
       background: var(--panel);
       color: var(--muted);
+      box-shadow: var(--shadow);
       font-size: .8rem;
     }
 
@@ -149,12 +211,15 @@
       height: 9px;
       border-radius: 50%;
       background: var(--danger);
-      box-shadow: 0 0 0 4px rgba(251, 113, 133, .1);
     }
 
     .connection-status.connected .status-dot {
       background: var(--success);
-      box-shadow: 0 0 0 4px rgba(52, 211, 153, .12);
+      box-shadow: 0 0 10px color-mix(
+        in srgb,
+        var(--success) 60%,
+        transparent
+      );
     }
 
     .connection-status.connecting .status-dot {
@@ -168,7 +233,7 @@
       }
     }
 
-    /* ===================== BUTTON & FORM ===================== */
+    /* ================= BUTTON & FORM ================= */
 
     .btn {
       display: inline-flex;
@@ -177,19 +242,16 @@
       gap: 7px;
       min-height: 40px;
       padding: 9px 14px;
-      border: 1px solid transparent;
+      border: 0;
       border-radius: 10px;
       background: var(--primary);
-      color: #06202a;
+      color: var(--on-primary);
       font-weight: 750;
-      transition:
-        transform .15s,
-        filter .15s,
-        background .15s;
+      transition: background .15s, transform .15s;
     }
 
     .btn:hover {
-      filter: brightness(1.08);
+      background: var(--primary-hover);
     }
 
     .btn:active {
@@ -197,15 +259,22 @@
     }
 
     .btn-secondary {
-      border-color: var(--border);
-      background: var(--panel-2);
+      background: var(--panel);
       color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-secondary:hover {
+      background: var(--panel-2);
     }
 
     .btn-danger {
-      border-color: rgba(251, 113, 133, .35);
-      background: rgba(251, 113, 133, .12);
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
       color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: color-mix(in srgb, var(--danger) 20%, transparent);
     }
 
     .btn-icon {
@@ -215,7 +284,7 @@
       min-width: 34px;
       min-height: 34px;
       padding: 0;
-      border: 1px solid var(--border);
+      border: 0;
       border-radius: 9px;
       background: transparent;
       color: var(--muted);
@@ -239,14 +308,19 @@
       min-width: 0;
     }
 
-    .field.full {
+    .field.full,
+    .full-width {
       grid-column: 1 / -1;
+    }
+
+    .full-width {
+      width: 100%;
     }
 
     label {
       color: var(--muted);
       font-size: .78rem;
-      font-weight: 600;
+      font-weight: 650;
     }
 
     input,
@@ -258,54 +332,84 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       outline: none;
-      background: var(--panel-3);
+      background: var(--input);
       color: var(--text);
-      transition:
-        border-color .2s,
-        box-shadow .2s;
+      transition: border-color .15s, box-shadow .15s;
     }
 
     textarea {
-      min-height: 82px;
+      min-height: 80px;
       resize: vertical;
+      line-height: 1.5;
     }
 
     input:focus,
     select:focus,
     textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(34, 211, 238, .1);
+      box-shadow: 0 0 0 3px color-mix(
+        in srgb,
+        var(--primary) 12%,
+        transparent
+      );
     }
 
     input[type="color"] {
       padding: 4px;
+      cursor: pointer;
     }
 
     input[type="checkbox"] {
-      width: 16px;
-      min-height: 16px;
+      width: 17px;
+      min-height: 17px;
+      padding: 0;
       accent-color: var(--primary);
     }
 
     .checkbox-label {
       display: flex;
       align-items: center;
-      gap: 7px;
-      min-height: 42px;
+      gap: 8px;
+      min-height: 34px;
       color: var(--text);
-      font-size: .85rem;
+      font-size: .82rem;
+      font-weight: 500;
     }
 
-    .full-width {
-      grid-column: 1 / -1;
-      width: 100%;
+    .display-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 22px;
     }
 
-    /* ===================== DASHBOARD ===================== */
+    .form-section {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .form-section:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .form-section-title {
+      margin-bottom: 12px;
+      font-size: .88rem;
+    }
+
+    .form-hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .74rem;
+      line-height: 1.55;
+    }
+
+    /* ================= DASHBOARD ================= */
 
     .dashboard-info {
       display: flex;
-      align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 13px;
@@ -327,26 +431,25 @@
       position: relative;
       display: flex;
       grid-column: span var(--widget-width, 4);
-      grid-row: span var(--widget-height, 30);
+      grid-row: span var(--widget-height, 28);
       flex-direction: column;
       min-width: 0;
       min-height: 0;
       overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: rgba(13, 27, 45, .96);
+      border: 0;
+      border-radius: 16px;
+      background: var(--panel);
       box-shadow: var(--shadow);
-      transition:
-        border-color .2s,
-        opacity .2s;
+      transition: box-shadow .2s, background .2s;
     }
 
     .widget:hover {
-      border-color: #34516f;
+      box-shadow: var(--shadow-hover);
     }
 
     .widget.resizing {
-      border-color: var(--primary);
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
       user-select: none;
     }
 
@@ -357,8 +460,12 @@
       gap: 9px;
       min-width: 0;
       padding: 12px 13px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(18, 36, 58, .55);
+      background: transparent;
+    }
+
+    .widget.chrome-only .widget-header {
+      min-height: 38px;
+      padding: 5px 8px;
     }
 
     .drag-handle {
@@ -381,7 +488,11 @@
       width: 32px;
       height: 32px;
       border-radius: 9px;
-      background: rgba(34, 211, 238, .08);
+      background: color-mix(
+        in srgb,
+        var(--primary) 10%,
+        transparent
+      );
       font-size: 1.15rem;
     }
 
@@ -402,8 +513,7 @@
       overflow: hidden;
       margin-top: 3px;
       color: var(--muted);
-      font-family:
-        ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
       font-size: .68rem;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -412,7 +522,8 @@
     .widget-actions {
       display: flex;
       flex: 0 0 auto;
-      gap: 5px;
+      gap: 3px;
+      margin-left: auto;
     }
 
     .widget-body {
@@ -421,7 +532,7 @@
       align-items: center;
       justify-content: center;
       min-height: 0;
-      padding: 18px;
+      padding: 14px 18px 18px;
       overflow: hidden;
     }
 
@@ -430,8 +541,7 @@
       flex: 0 0 auto;
       justify-content: space-between;
       gap: 8px;
-      padding: 9px 28px 9px 14px;
-      border-top: 1px solid var(--border);
+      padding: 8px 28px 10px 14px;
       color: var(--muted);
       font-size: .68rem;
     }
@@ -462,10 +572,6 @@
       content: "";
     }
 
-    .resize-handle:hover {
-      color: var(--primary);
-    }
-
     .sortable-ghost {
       opacity: .35;
     }
@@ -475,34 +581,23 @@
       grid-column: 1 / -1;
       place-items: center;
       min-height: 320px;
-      padding: 45px 20px;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
+      padding: 40px;
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
       color: var(--muted);
       text-align: center;
     }
 
-    .empty-state-icon {
-      margin-bottom: 12px;
-      font-size: 2.5rem;
-    }
-
-    .empty-state p {
-      margin: 7px 0 18px;
-    }
-
-    /* ===================== LABEL ===================== */
+    /* ================= WIDGET CONTENT ================= */
 
     .label-value {
       max-width: 100%;
       overflow-wrap: anywhere;
-      color: var(--primary);
       font-size: clamp(1.5rem, 4vw, 2.35rem);
       font-weight: 800;
       text-align: center;
     }
-
-    /* ===================== GAUGE ===================== */
 
     .gauge {
       width: min(260px, 100%);
@@ -515,8 +610,12 @@
       max-height: 155px;
     }
 
+    .gauge-track {
+      stroke: var(--border);
+    }
+
     .gauge-progress {
-      transition: stroke-dashoffset .35s ease;
+      transition: stroke-dashoffset .35s, stroke .35s;
     }
 
     .gauge-value {
@@ -530,8 +629,6 @@
       font-size: .82rem;
       font-weight: 500;
     }
-
-    /* ===================== LEVEL HORIZONTAL ===================== */
 
     .level-container {
       width: 100%;
@@ -547,16 +644,15 @@
     .level-track {
       height: 24px;
       overflow: hidden;
-      border: 1px solid var(--border);
       border-radius: 999px;
-      background: #07111f;
+      background: var(--input);
     }
 
     .level-fill {
       width: 0;
       height: 100%;
       border-radius: inherit;
-      transition: width .35s ease;
+      transition: width .35s, background .35s;
     }
 
     .level-range {
@@ -567,13 +663,10 @@
       font-size: .72rem;
     }
 
-    /* ===================== LEVEL VERTICAL ===================== */
-
     .vertical-level {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       width: 100%;
       height: 100%;
       min-height: 190px;
@@ -587,8 +680,6 @@
     .vertical-level-main {
       display: flex;
       flex: 1;
-      align-items: center;
-      justify-content: center;
       gap: 10px;
       min-height: 145px;
     }
@@ -598,10 +689,8 @@
       align-self: stretch;
       flex-direction: column;
       justify-content: space-between;
-      padding: 3px 0;
       color: var(--muted);
       font-size: .68rem;
-      text-align: right;
     }
 
     .vertical-track {
@@ -611,9 +700,8 @@
       min-height: 145px;
       max-height: 260px;
       overflow: hidden;
-      border: 1px solid var(--border);
       border-radius: 14px;
-      background: #07111f;
+      background: var(--input);
     }
 
     .vertical-fill {
@@ -623,10 +711,8 @@
       left: 0;
       height: 0;
       border-radius: 12px;
-      transition: height .35s ease;
+      transition: height .35s, background .35s;
     }
-
-    /* ===================== CHART ===================== */
 
     .chart-container {
       position: relative;
@@ -635,22 +721,195 @@
       min-height: 170px;
     }
 
-    /* ===================== DIALOG ===================== */
+    .title-widget .widget-body {
+      padding: 20px 24px;
+    }
+
+    .dashboard-title {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .publish-widget {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .mqtt-action-button {
+      min-width: 150px;
+      min-height: 58px;
+      padding: 14px 24px;
+      border: 0;
+      border-radius: 13px;
+      color: #FFFFFF;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    .control-payload {
+      max-width: 100%;
+      color: var(--muted);
+      font: .72rem ui-monospace, Consolas, monospace;
+      overflow-wrap: anywhere;
+      text-align: center;
+    }
+
+    .switch-control {
+      position: relative;
+      width: 82px;
+      height: 42px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: var(--border);
+      transition: background .2s;
+    }
+
+    .switch-control::after {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+      content: "";
+      transition: transform .2s;
+    }
+
+    .switch-control.on {
+      background: var(--success);
+    }
+
+    .switch-control.on::after {
+      transform: translateX(40px);
+    }
+
+    .switch-text {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .alarm-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .alarm-light {
+      width: 72px;
+      height: 72px;
+      border: 8px solid color-mix(
+        in srgb,
+        var(--text) 8%,
+        transparent
+      );
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 25px color-mix(
+        in srgb,
+        var(--success) 25%,
+        transparent
+      );
+    }
+
+    .alarm-display.active .alarm-light {
+      background: var(--danger);
+      box-shadow: 0 0 35px color-mix(
+        in srgb,
+        var(--danger) 65%,
+        transparent
+      );
+      animation: alarm-blink .65s infinite alternate;
+    }
+
+    @keyframes alarm-blink {
+      to {
+        opacity: .35;
+      }
+    }
+
+    .alarm-status {
+      font-size: 1.7rem;
+      font-weight: 900;
+    }
+
+    .alarm-detail,
+    .alarm-value {
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    /* ================= SERIES EDITOR ================= */
+
+    .series-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .series-row {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+    }
+
+    .series-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .series-row-header h4 {
+      font-size: .82rem;
+    }
+
+    .series-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .series-topic {
+      grid-column: 1 / -1;
+    }
+
+    .series-color-input {
+      height: 42px;
+    }
+
+    .add-series-button {
+      margin-top: 12px;
+      width: 100%;
+      box-shadow: none;
+    }
+
+    /* ================= DIALOG ================= */
 
     dialog {
-      width: min(540px, calc(100% - 28px));
+      width: min(720px, calc(100% - 28px));
       max-height: calc(100dvh - 36px);
       padding: 0;
       overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border: 0;
+      border-radius: 16px;
       background: var(--panel);
       color: var(--text);
-      box-shadow: 0 25px 80px rgba(0, 0, 0, .55);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, .38);
     }
 
     dialog::backdrop {
-      background: rgba(1, 7, 15, .75);
+      background: var(--overlay);
       backdrop-filter: blur(4px);
     }
 
@@ -680,14 +939,13 @@
       border-top: 1px solid var(--border);
     }
 
-    .form-hint {
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: .75rem;
-      line-height: 1.55;
+    .dialog-footer .btn-secondary,
+    .chat-compose .btn-secondary {
+      box-shadow: none;
+      background: var(--panel-2);
     }
 
-    /* ===================== CHAT DRAWER ===================== */
+    /* ================= CHAT ================= */
 
     .chat-dialog {
       width: min(450px, 100%);
@@ -705,35 +963,20 @@
       height: 100%;
     }
 
-    .chat-header {
-      flex: 0 0 auto;
-    }
-
-    .chat-header-info {
-      min-width: 0;
-    }
-
-    .chat-header-info p {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: .72rem;
-    }
-
     .chat-messages {
       display: flex;
-      flex: 1 1 auto;
+      flex: 1;
       flex-direction: column;
       gap: 12px;
       min-height: 0;
       padding: 18px;
       overflow-y: auto;
-      background: #091522;
+      background: var(--panel-3);
     }
 
     .chat-empty {
       margin: auto;
       color: var(--muted);
-      font-size: .82rem;
       text-align: center;
     }
 
@@ -752,30 +995,26 @@
     .chat-topic {
       margin-bottom: 4px;
       color: var(--muted);
-      font-family:
-        ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: .65rem;
+      font: .65rem ui-monospace, Consolas, monospace;
       overflow-wrap: anywhere;
     }
 
     .chat-bubble {
       padding: 10px 12px;
-      border: 1px solid var(--border);
       border-radius: 13px 13px 13px 4px;
       background: var(--panel-2);
-      font-family:
-        ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: .8rem;
-      line-height: 1.5;
+      font: .8rem/1.5 ui-monospace, Consolas, monospace;
       overflow-wrap: anywhere;
       white-space: pre-wrap;
     }
 
     .outgoing .chat-bubble {
-      border-color: rgba(34, 211, 238, .3);
       border-radius: 13px 13px 4px 13px;
-      background: rgba(34, 211, 238, .13);
-      color: #d9fbff;
+      background: color-mix(
+        in srgb,
+        var(--primary) 16%,
+        var(--panel)
+      );
     }
 
     .chat-time {
@@ -785,19 +1024,8 @@
     }
 
     .chat-compose {
-      flex: 0 0 auto;
       padding: 14px;
       border-top: 1px solid var(--border);
-      background: var(--panel);
-    }
-
-    .chat-compose .form-grid {
-      gap: 9px;
-    }
-
-    .chat-compose textarea {
-      min-height: 68px;
-      max-height: 150px;
     }
 
     .chat-compose-bottom {
@@ -815,15 +1043,10 @@
     }
 
     .chat-options select {
-      width: 68px;
+      width: 80px;
     }
 
-    .chat-options .checkbox-label {
-      min-height: auto;
-      white-space: nowrap;
-    }
-
-    /* ===================== TOAST ===================== */
+    /* ================= TOAST ================= */
 
     .toast-container {
       position: fixed;
@@ -838,27 +1061,19 @@
 
     .toast {
       padding: 12px 14px;
-      border: 1px solid var(--border);
       border-left: 4px solid var(--primary);
       border-radius: 10px;
-      background: #102238;
-      box-shadow: var(--shadow);
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: var(--shadow-hover);
       font-size: .82rem;
-      animation: slide-in .2s ease-out;
     }
 
     .toast.error {
       border-left-color: var(--danger);
     }
 
-    @keyframes slide-in {
-      from {
-        transform: translateY(8px);
-        opacity: 0;
-      }
-    }
-
-    /* ===================== RESPONSIVE ===================== */
+    /* ================= RESPONSIVE ================= */
 
     @media (max-width: 1100px) {
       .dashboard {
@@ -867,6 +1082,10 @@
 
       .widget {
         grid-column: span 6 !important;
+      }
+
+      .resize-handle {
+        display: none;
       }
     }
 
@@ -891,11 +1110,7 @@
 
       .widget {
         grid-column: 1 !important;
-        min-height: 390px;
-      }
-
-      .resize-handle {
-        display: none;
+        min-height: 340px;
       }
 
       .dashboard-info span:last-child {
@@ -907,10 +1122,16 @@
       }
     }
 
-    @media (max-width: 480px) {
-      .brand-icon {
-        width: 40px;
-        height: 40px;
+    @media (max-width: 520px) {
+      .form-grid,
+      .series-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full,
+      .full-width,
+      .series-topic {
+        grid-column: auto;
       }
 
       h1 {
@@ -918,25 +1139,11 @@
       }
 
       .header-actions .btn {
-        padding: 8px 11px;
+        padding-inline: 11px;
       }
 
       .connection-status {
-        order: 4;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .field.full,
-      .full-width {
-        grid-column: auto;
-      }
-
-      .widget-actions .btn-icon {
-        width: 30px;
-        min-width: 30px;
+        order: 5;
       }
     }
   </style>
@@ -949,7 +1156,7 @@
         <div class="brand-icon">⌁</div>
         <div>
           <h1>IoT Control Center</h1>
-          <p class="subtitle">Monitoring MQTT real-time</p>
+          <p class="subtitle">Monitoring dan kontrol MQTT real-time</p>
         </div>
       </div>
 
@@ -958,19 +1165,27 @@
           id="statusButton"
           class="connection-status"
           type="button"
-          title="Buka pengaturan broker"
+          title="Pengaturan broker"
         >
           <span class="status-dot"></span>
           <span id="statusText">Belum terhubung</span>
         </button>
 
         <button
+          id="themeBtn"
+          class="btn btn-secondary"
+          type="button"
+          title="Ganti tema"
+        >
+          ☀ Terang
+        </button>
+
+        <button
           id="openChatBtn"
           class="btn btn-secondary"
           type="button"
-          title="Publish dan monitor pesan"
         >
-          💬 <span>Pesan</span>
+          💬 Pesan
         </button>
 
         <button
@@ -978,7 +1193,7 @@
           class="btn btn-secondary"
           type="button"
         >
-          ⚙ <span>Broker</span>
+          ⚙ Broker
         </button>
 
         <button
@@ -986,22 +1201,20 @@
           class="btn"
           type="button"
         >
-          ＋ <span>Widget</span>
+          ＋ Widget
         </button>
       </div>
     </header>
 
-    <section>
-      <div class="dashboard-info">
-        <span>Geser widget melalui ikon ⋮⋮ untuk mengatur posisi.</span>
-        <span>Ubah ukuran melalui handle di sudut kanan bawah widget.</span>
-      </div>
+    <div class="dashboard-info">
+      <span>Geser widget melalui ikon ⋮⋮ untuk mengatur posisi.</span>
+      <span>Ubah ukuran melalui handle di sudut kanan bawah.</span>
+    </div>
 
-      <div id="dashboard" class="dashboard"></div>
-    </section>
+    <div id="dashboard" class="dashboard"></div>
   </main>
 
-  <!-- Pengaturan broker -->
+  <!-- PENGATURAN BROKER -->
   <dialog id="brokerDialog">
     <form id="brokerForm">
       <div class="dialog-header">
@@ -1023,29 +1236,23 @@
             <input
               id="brokerUrl"
               value="wss://broker.emqx.io:8084/mqtt"
-              placeholder="wss://broker.example.com:8084/mqtt"
-              autocomplete="off"
               required
             >
           </div>
 
           <div class="field">
-            <label for="username">Username (opsional)</label>
+            <label for="username">Username</label>
             <input id="username" autocomplete="username">
           </div>
 
           <div class="field">
-            <label for="password">Password (opsional)</label>
-            <input
-              id="password"
-              type="password"
-              autocomplete="current-password"
-            >
+            <label for="password">Password</label>
+            <input id="password" type="password">
           </div>
 
           <div class="field full">
             <label for="clientId">Client ID</label>
-            <input id="clientId" autocomplete="off">
+            <input id="clientId">
           </div>
 
           <button
@@ -1058,21 +1265,21 @@
         </div>
 
         <p class="form-hint">
-          Browser memerlukan MQTT melalui WebSocket. ESP32 dapat tetap
-          menggunakan MQTT TCP port 1883 menuju broker yang sama.
+          Browser menggunakan MQTT WebSocket. ESP32 dapat menggunakan
+          MQTT TCP port 1883 menuju broker yang sama.
           Password tidak disimpan di browser.
         </p>
       </div>
     </form>
   </dialog>
 
-  <!-- Publish dan pesan masuk -->
+  <!-- CHAT MQTT -->
   <dialog id="chatDialog" class="chat-dialog">
     <div class="chat-layout">
-      <div class="dialog-header chat-header">
-        <div class="chat-header-info">
+      <div class="dialog-header">
+        <div>
           <h2>Pesan MQTT</h2>
-          <p>Pesan keluar dan pesan masuk dari topik widget</p>
+          <p class="subtitle">Publish dan monitor pesan masuk</p>
         </div>
 
         <button
@@ -1086,10 +1293,7 @@
       </div>
 
       <div id="chatMessages" class="chat-messages">
-        <div class="chat-empty">
-          Belum ada pesan.<br>
-          Hubungkan broker lalu kirim atau terima data.
-        </div>
+        <div class="chat-empty">Belum ada pesan.</div>
       </div>
 
       <form id="publishForm" class="chat-compose">
@@ -1098,8 +1302,7 @@
             <label for="publishTopic">Topik</label>
             <input
               id="publishTopic"
-              placeholder="demo/iot/suhu"
-              autocomplete="off"
+              placeholder="demo/iot/relay"
               required
             >
           </div>
@@ -1108,7 +1311,7 @@
             <label for="publishPayload">Payload</label>
             <textarea
               id="publishPayload"
-              placeholder='27.5 atau {"value":27.5}'
+              placeholder='ON atau {"value":27.5}'
               required
             ></textarea>
           </div>
@@ -1134,7 +1337,7 @@
     </div>
   </dialog>
 
-  <!-- Tambah/edit widget -->
+  <!-- FORM WIDGET -->
   <dialog id="widgetDialog">
     <form id="widgetForm">
       <div class="dialog-header">
@@ -1152,94 +1355,316 @@
       <div class="dialog-body">
         <input id="widgetId" type="hidden">
 
-        <div class="form-grid">
-          <div class="field">
-            <label for="widgetTitle">Nama widget</label>
-            <input
-              id="widgetTitle"
-              required
-              placeholder="Suhu Ruangan"
-            >
+        <section class="form-section">
+          <h3 class="form-section-title">Informasi Widget</h3>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="widgetTitle">Nama/judul</label>
+              <input
+                id="widgetTitle"
+                required
+                placeholder="Suhu Ruangan"
+              >
+            </div>
+
+            <div class="field">
+              <label for="widgetType">Tipe widget</label>
+              <select id="widgetType">
+                <option value="gauge">Gauge</option>
+                <option value="label">Label</option>
+                <option value="level">Level horizontal</option>
+                <option value="verticalLevel">Level vertikal</option>
+                <option value="line">Grafik line</option>
+                <option value="bar">Grafik bar</option>
+                <option value="multiLine">Grafik multiple line</option>
+                <option value="multiBar">Grafik multiple bar</option>
+                <option value="button">Button publish</option>
+                <option value="switch">Switch publish</option>
+                <option value="alarm">Alarm</option>
+                <option value="title">Judul tanpa data</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="widgetIcon">Ikon</label>
+              <select id="widgetIcon">
+                <option value="📡">📡 Sensor</option>
+                <option value="🌡️">🌡️ Suhu</option>
+                <option value="💧">💧 Kelembapan</option>
+                <option value="🪣">🪣 Tangki</option>
+                <option value="📈">📈 Grafik</option>
+                <option value="📊">📊 Bar</option>
+                <option value="📟">📟 Data</option>
+                <option value="⚡">⚡ Listrik</option>
+                <option value="🔋">🔋 Baterai</option>
+                <option value="💡">💡 Lampu</option>
+                <option value="🌀">🌀 Kipas</option>
+                <option value="🔘">🔘 Tombol</option>
+                <option value="🚨">🚨 Alarm</option>
+                <option value="🏷️">🏷️ Judul</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="widgetColor">Warna utama</label>
+              <input
+                id="widgetColor"
+                type="color"
+                value="#0EA5E9"
+              >
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h3 class="form-section-title">Tampilan</h3>
+
+          <div class="display-options">
+            <label class="checkbox-label">
+              <input id="showName" type="checkbox" checked>
+              Tampilkan nama
+            </label>
+
+            <label class="checkbox-label">
+              <input id="showIcon" type="checkbox" checked>
+              Tampilkan ikon
+            </label>
+
+            <label class="checkbox-label">
+              <input id="showTopic" type="checkbox" checked>
+              Tampilkan topic
+            </label>
           </div>
 
-          <div class="field">
-            <label for="widgetType">Jenis widget</label>
-            <select id="widgetType">
-              <option value="gauge">Gauge</option>
-              <option value="label">Label</option>
-              <option value="level">Level horizontal</option>
-              <option value="verticalLevel">Level vertikal</option>
-              <option value="chart">Grafik</option>
-            </select>
+          <p class="form-hint">
+            Tombol edit, hapus, dan handle pemindahan tetap tersedia
+            walaupun seluruh informasi widget disembunyikan.
+          </p>
+        </section>
+
+        <section id="subscribeSection" class="form-section">
+          <h3 class="form-section-title">Sumber Data</h3>
+
+          <div class="form-grid">
+            <div id="singleTopicField" class="field full">
+              <label for="widgetTopic">Topik subscribe</label>
+              <input
+                id="widgetTopic"
+                placeholder="demo/iot/sensor"
+              >
+            </div>
+
+            <div id="formatField" class="field">
+              <label for="dataFormat">Tipe data</label>
+              <select id="dataFormat">
+                <option value="plain">Plain text</option>
+                <option value="json">JSON</option>
+              </select>
+            </div>
+
+            <div id="jsonKeyField" class="field" hidden>
+              <label for="jsonKey">JSON key/path</label>
+              <input
+                id="jsonKey"
+                value="value"
+                placeholder="value atau sensor.suhu"
+              >
+            </div>
           </div>
 
-          <div class="field full">
-            <label for="widgetTopic">Topik subscribe</label>
-            <input
-              id="widgetTopic"
-              required
-              placeholder="sensor/ruangan/suhu"
-              autocomplete="off"
-            >
+          <p id="singleJsonHint" class="form-hint" hidden>
+            Contoh path <code>sensor.suhu</code> untuk payload
+            <code>{"sensor":{"suhu":27.5}}</code>.
+          </p>
+
+          <p id="multiSourceHint" class="form-hint" hidden>
+            Topic dan JSON key untuk setiap series diatur secara terpisah
+            pada bagian berikutnya.
+          </p>
+        </section>
+
+        <section id="seriesSection" class="form-section" hidden>
+          <h3 class="form-section-title">Daftar Series</h3>
+
+          <div id="seriesList" class="series-list"></div>
+
+          <button
+            id="addSeriesBtn"
+            class="btn btn-secondary add-series-button"
+            type="button"
+          >
+            ＋ Tambah Series
+          </button>
+
+          <p class="form-hint">
+            Setiap series dapat menggunakan topic berbeda. JSON key
+            mendukung path bertingkat, misalnya <code>sensor.suhu</code>.
+          </p>
+        </section>
+
+        <section id="numericSection" class="form-section">
+          <h3 class="form-section-title">Skala dan Satuan</h3>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="widgetMin">Nilai minimum</label>
+              <input
+                id="widgetMin"
+                type="number"
+                step="any"
+                value="0"
+              >
+            </div>
+
+            <div class="field">
+              <label for="widgetMax">Nilai maksimum</label>
+              <input
+                id="widgetMax"
+                type="number"
+                step="any"
+                value="100"
+              >
+            </div>
+
+            <div class="field full">
+              <label for="widgetUnit">Satuan</label>
+              <input
+                id="widgetUnit"
+                placeholder="°C, %, ppm"
+              >
+            </div>
+          </div>
+        </section>
+
+        <section id="thresholdSection" class="form-section" hidden>
+          <h3 class="form-section-title">Tiga Level Warna</h3>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="warnAt">Peringatan mulai</label>
+              <input
+                id="warnAt"
+                type="number"
+                step="any"
+                value="60"
+              >
+            </div>
+
+            <div class="field">
+              <label for="dangerAt">Bahaya mulai</label>
+              <input
+                id="dangerAt"
+                type="number"
+                step="any"
+                value="80"
+              >
+            </div>
+
+            <div class="field">
+              <label for="normalColor">Warna normal</label>
+              <input
+                id="normalColor"
+                type="color"
+                value="#10B981"
+              >
+            </div>
+
+            <div class="field">
+              <label for="warningColor">Warna peringatan</label>
+              <input
+                id="warningColor"
+                type="color"
+                value="#F59E0B"
+              >
+            </div>
+
+            <div class="field">
+              <label for="dangerColor">Warna bahaya</label>
+              <input
+                id="dangerColor"
+                type="color"
+                value="#EF4444"
+              >
+            </div>
           </div>
 
-          <div class="field">
-            <label for="widgetIcon">Ikon</label>
-            <select id="widgetIcon">
-              <option value="🌡️">🌡️ Suhu</option>
-              <option value="💧">💧 Air/kelembapan</option>
-              <option value="🪣">🪣 Tangki</option>
-              <option value="📈">📈 Grafik</option>
-              <option value="📟">📟 Data</option>
-              <option value="⚡">⚡ Listrik</option>
-              <option value="🔋">🔋 Baterai</option>
-              <option value="💡">💡 Lampu</option>
-              <option value="🌀">🌀 Kipas</option>
-              <option value="🌱">🌱 Tanaman</option>
-              <option value="🏭">🏭 Mesin</option>
-              <option value="📡">📡 Sensor</option>
-            </select>
-          </div>
+          <p class="form-hint">
+            Normal: nilai &lt; peringatan. Peringatan: nilai ≥ peringatan.
+            Bahaya: nilai ≥ bahaya.
+          </p>
+        </section>
 
-          <div class="field">
-            <label for="widgetColor">Warna</label>
-            <input
-              id="widgetColor"
-              type="color"
-              value="#22d3ee"
-            >
-          </div>
+        <section id="alarmSection" class="form-section" hidden>
+          <h3 class="form-section-title">Kondisi Alarm</h3>
 
-          <div class="field">
-            <label for="widgetMin">Nilai minimum</label>
-            <input
-              id="widgetMin"
-              type="number"
-              step="any"
-              value="0"
-              required
-            >
-          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="alarmOperator">Operator</label>
+              <select id="alarmOperator">
+                <option value=">">Lebih dari (&gt;)</option>
+                <option value=">=">Lebih dari/sama dengan (≥)</option>
+                <option value="<">Kurang dari (&lt;)</option>
+                <option value="<=">Kurang dari/sama dengan (≤)</option>
+                <option value="==">Sama dengan</option>
+                <option value="!=">Tidak sama dengan</option>
+              </select>
+            </div>
 
-          <div class="field">
-            <label for="widgetMax">Nilai maksimum</label>
-            <input
-              id="widgetMax"
-              type="number"
-              step="any"
-              value="100"
-              required
-            >
+            <div class="field">
+              <label for="alarmThreshold">Nilai pembanding</label>
+              <input id="alarmThreshold" value="30">
+            </div>
           </div>
+        </section>
 
-          <div class="field full">
-            <label for="widgetUnit">Satuan</label>
-            <input
-              id="widgetUnit"
-              placeholder="°C, %, ppm, volt"
-            >
+        <section id="publishSection" class="form-section" hidden>
+          <h3 class="form-section-title">Pengaturan Publish</h3>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label for="controlTopic">Topik publish</label>
+              <input
+                id="controlTopic"
+                placeholder="demo/iot/relay"
+              >
+            </div>
+
+            <div id="buttonPayloadField" class="field full">
+              <label for="buttonPayload">
+                Payload saat tombol ditekan
+              </label>
+              <input id="buttonPayload" value="ON">
+            </div>
+
+            <div id="onPayloadField" class="field" hidden>
+              <label for="onPayload">Payload ON</label>
+              <input id="onPayload" value="ON">
+            </div>
+
+            <div id="offPayloadField" class="field" hidden>
+              <label for="offPayload">Payload OFF</label>
+              <input id="offPayload" value="OFF">
+            </div>
+
+            <div class="field">
+              <label for="controlQos">QoS</label>
+              <select id="controlQos">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Opsi</label>
+              <label class="checkbox-label">
+                <input id="controlRetain" type="checkbox">
+                Retained message
+              </label>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <div class="dialog-footer">
@@ -1250,6 +1675,7 @@
         >
           Batal
         </button>
+
         <button class="btn" type="submit">Simpan Widget</button>
       </div>
     </form>
@@ -1270,12 +1696,35 @@
 
     const $ = selector => document.querySelector(selector);
     const dashboard = $("#dashboard");
-    const widgetDialog = $("#widgetDialog");
 
-    const STORAGE_KEY = "iot-dashboard-widgets-v2";
-    const OLD_STORAGE_KEY = "iot-dashboard-widgets-v1";
-    const MAX_CHART_POINTS = 30;
-    const MAX_CHAT_MESSAGES = 100;
+    const STORAGE_KEY = "iot-dashboard-widgets-v4";
+    const THEME_KEY = "iot-dashboard-theme";
+    const MAX_POINTS = 30;
+    const MAX_CHAT = 100;
+
+    const SINGLE_DATA_TYPES = [
+      "gauge",
+      "label",
+      "level",
+      "verticalLevel",
+      "line",
+      "bar",
+      "alarm"
+    ];
+
+    const MULTI_TYPES = ["multiLine", "multiBar"];
+    const CHART_TYPES = ["line", "bar", "multiLine", "multiBar"];
+    const LEVEL_TYPES = ["gauge", "level", "verticalLevel"];
+    const CONTROL_TYPES = ["button", "switch"];
+
+    const SERIES_COLORS = [
+      "#0EA5E9",
+      "#10B981",
+      "#8B5CF6",
+      "#F59E0B",
+      "#EF4444",
+      "#EC4899"
+    ];
 
     const state = {
       client: null,
@@ -1288,108 +1737,10 @@
       globalThis.crypto?.randomUUID?.() ||
       `widget-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-    function defaultSize(type) {
-      switch (type) {
-        case "chart":
-          return { w: 6, h: 32 };
-        case "verticalLevel":
-          return { w: 3, h: 32 };
-        case "label":
-          return { w: 3, h: 24 };
-        default:
-          return { w: 4, h: 28 };
-      }
-    }
-
-    function defaultIcon(type) {
-      const icons = {
-        gauge: "🌡️",
-        label: "📟",
-        level: "💧",
-        verticalLevel: "🪣",
-        chart: "📈"
-      };
-
-      return icons[type] || "📡";
-    }
-
-    function defaultWidgets() {
-      return [
-        {
-          id: uid(),
-          title: "Suhu Ruangan",
-          type: "gauge",
-          topic: "demo/iot/suhu",
-          icon: "🌡️",
-          min: 0,
-          max: 100,
-          unit: "°C",
-          color: "#22d3ee",
-          ...defaultSize("gauge")
-        },
-        {
-          id: uid(),
-          title: "Level Tangki",
-          type: "verticalLevel",
-          topic: "demo/iot/level",
-          icon: "🪣",
-          min: 0,
-          max: 100,
-          unit: "%",
-          color: "#34d399",
-          ...defaultSize("verticalLevel")
-        },
-        {
-          id: uid(),
-          title: "Grafik Kelembapan",
-          type: "chart",
-          topic: "demo/iot/kelembapan",
-          icon: "📈",
-          min: 0,
-          max: 100,
-          unit: "%",
-          color: "#818cf8",
-          ...defaultSize("chart")
-        }
-      ];
-    }
-
-    function normalizeWidget(widget) {
-      const type = [
-        "gauge",
-        "label",
-        "level",
-        "verticalLevel",
-        "chart"
-      ].includes(widget.type)
-        ? widget.type
-        : "label";
-
-      const size = defaultSize(type);
-      const min = Number(widget.min);
-      const max = Number(widget.max);
-
-      return {
-        id: widget.id || uid(),
-        title: String(widget.title || "Widget"),
-        type,
-        topic: String(widget.topic || ""),
-        icon: String(widget.icon || defaultIcon(type)),
-        min: Number.isFinite(min) ? min : 0,
-        max: Number.isFinite(max) && max > min ? max : 100,
-        unit: String(widget.unit || ""),
-        color: /^#[0-9a-f]{6}$/i.test(widget.color)
-          ? widget.color
-          : "#22d3ee",
-        w: Math.max(
-          2,
-          Math.min(12, Number(widget.w) || size.w)
-        ),
-        h: Math.max(
-          20,
-          Math.min(60, Number(widget.h) || size.h)
-        )
-      };
+    function safeColor(value, fallback = "#0EA5E9") {
+      return /^#[0-9a-f]{6}$/i.test(value || "")
+        ? value
+        : fallback;
     }
 
     function showToast(message, type = "info") {
@@ -1403,8 +1754,8 @@
     }
 
     function setStatus(mode, text) {
-      const status = $("#statusButton");
-      status.className = `connection-status ${mode}`;
+      $("#statusButton").className =
+        `connection-status ${mode}`;
       $("#statusText").textContent = text;
     }
 
@@ -1414,30 +1765,328 @@
       }).format(value);
     }
 
-    function saveWidgets() {
-      const configs = state.widgets.map(widget => ({
-        id: widget.id,
-        title: widget.title,
-        type: widget.type,
-        topic: widget.topic,
-        icon: widget.icon,
-        min: widget.min,
-        max: widget.max,
-        unit: widget.unit,
-        color: widget.color,
-        w: widget.w,
-        h: widget.h
-      }));
+    /* ================= THEME ================= */
 
+    function applyTheme(theme, save = true) {
+      const selected = theme === "light" ? "light" : "dark";
+      document.documentElement.dataset.theme = selected;
+
+      $("#themeBtn").textContent =
+        selected === "dark" ? "☀ Terang" : "☾ Gelap";
+
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute(
+          "content",
+          selected === "dark" ? "#0F172A" : "#F4F6F8"
+        );
+
+      if (save) {
+        try {
+          localStorage.setItem(THEME_KEY, selected);
+        } catch {
+          // Tema tetap bekerja walaupun localStorage tidak tersedia.
+        }
+      }
+
+      updateChartThemes();
+    }
+
+    function updateChartThemes() {
+      const style = getComputedStyle(document.documentElement);
+      const text = style.getPropertyValue("--muted").trim();
+      const grid = style.getPropertyValue("--grid").trim();
+
+      state.widgets.forEach(widget => {
+        if (!widget.chart) return;
+
+        const options = widget.chart.options;
+
+        if (options.scales?.x) {
+          options.scales.x.ticks.color = text;
+          options.scales.x.grid.color = grid;
+        }
+
+        if (options.scales?.y) {
+          options.scales.y.ticks.color = text;
+          options.scales.y.grid.color = grid;
+        }
+
+        if (options.plugins?.legend?.labels) {
+          options.plugins.legend.labels.color = text;
+        }
+
+        widget.chart.update("none");
+      });
+    }
+
+    /* ================= DEFAULT & STORAGE ================= */
+
+    function defaultSize(type) {
+      if (type === "title") return { w: 12, h: 13 };
+      if (MULTI_TYPES.includes(type)) return { w: 8, h: 30 };
+      if (["line", "bar"].includes(type)) return { w: 6, h: 29 };
+      if (type === "verticalLevel") return { w: 3, h: 30 };
+      if (["button", "switch"].includes(type)) return { w: 3, h: 22 };
+      if (type === "alarm") return { w: 3, h: 24 };
+      if (type === "label") return { w: 3, h: 22 };
+      return { w: 4, h: 27 };
+    }
+
+    function defaultIcon(type) {
+      return {
+        gauge: "🌡️",
+        label: "📟",
+        level: "💧",
+        verticalLevel: "🪣",
+        line: "📈",
+        bar: "📊",
+        multiLine: "📈",
+        multiBar: "📊",
+        button: "🔘",
+        switch: "💡",
+        alarm: "🚨",
+        title: "🏷️"
+      }[type] || "📡";
+    }
+
+    function normalizeSeries(series, input, index) {
+      return {
+        topic: String(series.topic || input.topic || ""),
+        key: String(series.key || "value"),
+        label: String(
+          series.label ||
+          series.key ||
+          `Data ${index + 1}`
+        ),
+        color: safeColor(
+          series.color,
+          SERIES_COLORS[index % SERIES_COLORS.length]
+        )
+      };
+    }
+
+    function normalizeWidget(input) {
+      let type = input.type === "chart" ? "line" : input.type;
+
+      const allowed = [
+        ...SINGLE_DATA_TYPES,
+        ...MULTI_TYPES,
+        "button",
+        "switch",
+        "title"
+      ];
+
+      if (!allowed.includes(type)) type = "label";
+
+      const size = defaultSize(type);
+      const rawMin = Number(input.min);
+      const min = Number.isFinite(rawMin) ? rawMin : 0;
+      const rawMax = Number(input.max);
+      const max =
+        Number.isFinite(rawMax) && rawMax > min
+          ? rawMax
+          : 100;
+
+      let series = Array.isArray(input.series)
+        ? input.series.map((item, index) =>
+            normalizeSeries(item, input, index)
+          )
+        : [];
+
+      if (MULTI_TYPES.includes(type) && !series.length) {
+        series = [
+          normalizeSeries(
+            {
+              topic: input.topic || "",
+              key: "suhu",
+              label: "Suhu",
+              color: "#0EA5E9"
+            },
+            input,
+            0
+          ),
+          normalizeSeries(
+            {
+              topic: input.topic || "",
+              key: "kelembapan",
+              label: "Kelembapan",
+              color: "#10B981"
+            },
+            input,
+            1
+          )
+        ];
+      }
+
+      return {
+        id: input.id || uid(),
+        title: String(input.title || "Widget"),
+        type,
+
+        showName: input.showName !== false,
+        showIcon: input.showIcon !== false,
+        showTopic: input.showTopic !== false,
+
+        topic: String(input.topic || ""),
+        dataFormat: MULTI_TYPES.includes(type)
+          ? "json"
+          : input.dataFormat === "json"
+            ? "json"
+            : "plain",
+        jsonKey: String(input.jsonKey || "value"),
+        series,
+
+        icon: String(input.icon || defaultIcon(type)),
+        min,
+        max,
+        unit: String(input.unit || ""),
+        color: safeColor(input.color),
+
+        warnAt: Number.isFinite(Number(input.warnAt))
+          ? Number(input.warnAt)
+          : 60,
+        dangerAt: Number.isFinite(Number(input.dangerAt))
+          ? Number(input.dangerAt)
+          : 80,
+
+        normalColor: safeColor(input.normalColor, "#10B981"),
+        warningColor: safeColor(input.warningColor, "#F59E0B"),
+        dangerColor: safeColor(input.dangerColor, "#EF4444"),
+
+        alarmOperator: String(input.alarmOperator || ">"),
+        alarmThreshold: String(input.alarmThreshold ?? "30"),
+
+        controlTopic: String(input.controlTopic || ""),
+        buttonPayload: String(input.buttonPayload ?? "ON"),
+        onPayload: String(input.onPayload ?? "ON"),
+        offPayload: String(input.offPayload ?? "OFF"),
+        controlQos: Number(input.controlQos) || 0,
+        controlRetain: Boolean(input.controlRetain),
+
+        w: Math.max(
+          2,
+          Math.min(12, Number(input.w) || size.w)
+        ),
+        h: Math.max(
+          10,
+          Math.min(60, Number(input.h) || size.h)
+        )
+      };
+    }
+
+    function defaultWidgets() {
+      return [
+        normalizeWidget({
+          id: uid(),
+          title: "Monitoring Ruang Server",
+          type: "title",
+          icon: "🏷️"
+        }),
+        normalizeWidget({
+          id: uid(),
+          title: "Suhu Ruangan",
+          type: "gauge",
+          topic: "demo/iot/suhu",
+          dataFormat: "plain",
+          unit: "°C",
+          min: 0,
+          max: 50,
+          warnAt: 30,
+          dangerAt: 40
+        }),
+        normalizeWidget({
+          id: uid(),
+          title: "Level Tangki",
+          type: "verticalLevel",
+          topic: "demo/iot/level",
+          dataFormat: "plain",
+          unit: "%",
+          min: 0,
+          max: 100,
+          warnAt: 80,
+          dangerAt: 95
+        }),
+        normalizeWidget({
+          id: uid(),
+          title: "Suhu dan Kelembapan",
+          type: "multiLine",
+          min: 0,
+          max: 100,
+          series: [
+            {
+              topic: "demo/iot/suhu",
+              key: "value",
+              label: "Suhu",
+              color: "#0EA5E9"
+            },
+            {
+              topic: "demo/iot/kelembapan",
+              key: "value",
+              label: "Kelembapan",
+              color: "#10B981"
+            }
+          ]
+        })
+      ];
+    }
+
+    function saveWidgets() {
       try {
+        const configs = state.widgets.map(widget => {
+          const config = {};
+
+          [
+            "id",
+            "title",
+            "type",
+            "showName",
+            "showIcon",
+            "showTopic",
+            "topic",
+            "dataFormat",
+            "jsonKey",
+            "icon",
+            "min",
+            "max",
+            "unit",
+            "color",
+            "warnAt",
+            "dangerAt",
+            "normalColor",
+            "warningColor",
+            "dangerColor",
+            "alarmOperator",
+            "alarmThreshold",
+            "controlTopic",
+            "buttonPayload",
+            "onPayload",
+            "offPayload",
+            "controlQos",
+            "controlRetain",
+            "w",
+            "h"
+          ].forEach(key => {
+            config[key] = widget[key];
+          });
+
+          config.series = widget.series.map(series => ({
+            topic: series.topic,
+            key: series.key,
+            label: series.label,
+            color: series.color
+          }));
+
+          return config;
+        });
+
         localStorage.setItem(
           STORAGE_KEY,
           JSON.stringify(configs)
         );
-      } catch (error) {
-        console.warn("Konfigurasi tidak dapat disimpan:", error);
+      } catch {
         showToast(
-          "Konfigurasi widget tidak dapat disimpan.",
+          "Konfigurasi tidak dapat disimpan.",
           "error"
         );
       }
@@ -1447,7 +2096,9 @@
       try {
         const saved =
           localStorage.getItem(STORAGE_KEY) ||
-          localStorage.getItem(OLD_STORAGE_KEY);
+          localStorage.getItem("iot-dashboard-widgets-v3") ||
+          localStorage.getItem("iot-dashboard-widgets-v2") ||
+          localStorage.getItem("iot-dashboard-widgets-v1");
 
         const parsed = saved ? JSON.parse(saved) : null;
 
@@ -1460,30 +2111,45 @@
       }
     }
 
-    function applyWidgetSize(widget) {
+    /* ================= WIDGET RENDERING ================= */
+
+    function applySize(widget) {
       if (!widget.el) return;
 
       widget.el.style.setProperty(
         "--widget-width",
         widget.w
       );
+
       widget.el.style.setProperty(
         "--widget-height",
         widget.h
       );
     }
 
-    function createWidgetElement(widget) {
+    function createWidget(widget) {
       const article = document.createElement("article");
       article.className = "widget";
       article.dataset.id = widget.id;
+
+      if (widget.type === "title") {
+        article.classList.add("title-widget");
+      }
+
+      const hasHeaderContent =
+        widget.showName ||
+        widget.showIcon ||
+        widget.showTopic;
+
+      if (!hasHeaderContent) {
+        article.classList.add("chrome-only");
+      }
 
       article.innerHTML = `
         <header class="widget-header">
           <span
             class="drag-handle"
             title="Geser widget"
-            aria-label="Geser widget"
           >⋮⋮</span>
 
           <span class="widget-icon"></span>
@@ -1497,13 +2163,13 @@
             <button
               class="btn-icon edit-widget"
               type="button"
-              title="Edit widget"
+              title="Edit"
             >✎</button>
 
             <button
               class="btn-icon delete-widget"
               type="button"
-              title="Hapus widget"
+              title="Hapus"
             >✕</button>
           </div>
         </header>
@@ -1511,44 +2177,81 @@
         <div class="widget-body"></div>
 
         <footer class="widget-footer">
-          <span class="widget-state">Menunggu data…</span>
+          <span class="widget-state"></span>
           <span class="last-update">—</span>
         </footer>
 
         <button
           class="resize-handle"
           type="button"
-          title="Ubah ukuran widget"
-          aria-label="Ubah ukuran widget"
+          title="Ubah ukuran"
         ></button>
       `;
 
-      article.querySelector(".widget-icon").textContent =
-        widget.icon;
-      article.querySelector("h3").textContent =
-        widget.title;
-      article.querySelector(".widget-topic").textContent =
-        widget.topic;
+      const icon = article.querySelector(".widget-icon");
+      icon.textContent = widget.icon;
+      icon.hidden = !widget.showIcon;
+
+      const title = article.querySelector("h3");
+      title.textContent = widget.title;
+      title.hidden = !widget.showName;
+
+      const topicElement =
+        article.querySelector(".widget-topic");
+
+      const topicText = MULTI_TYPES.includes(widget.type)
+        ? widget.series.map(series => series.topic).join(", ")
+        : widget.topic ||
+          widget.controlTopic ||
+          "Tanpa sumber data";
+
+      topicElement.textContent = topicText;
+      topicElement.hidden = !widget.showTopic;
+      topicElement.title = topicText;
+
+      article.querySelector(".widget-state").textContent =
+        widget.type === "title"
+          ? "Judul"
+          : CONTROL_TYPES.includes(widget.type)
+            ? "Kontrol MQTT"
+            : "Menunggu data…";
 
       const body = article.querySelector(".widget-body");
 
-      if (widget.type === "gauge") {
+      if (widget.type === "title") {
+        body.innerHTML =
+          `<div class="dashboard-title"></div>`;
+
+        const heading =
+          body.querySelector(".dashboard-title");
+
+        heading.textContent = widget.title;
+        heading.style.color = widget.color;
+        heading.hidden = !widget.showName;
+      } else if (widget.type === "label") {
+        body.innerHTML =
+          `<div class="label-value">—</div>`;
+
+        body.querySelector(".label-value").style.color =
+          widget.color;
+      } else if (widget.type === "gauge") {
         body.innerHTML = `
           <div class="gauge">
             <svg viewBox="0 0 200 115" aria-hidden="true">
               <path
-                d="M 20 100 A 80 80 0 0 1 180 100"
+                class="gauge-track"
+                d="M20 100 A80 80 0 0 1 180 100"
                 fill="none"
-                stroke="#213750"
                 stroke-width="15"
                 stroke-linecap="round"
               />
+
               <path
                 class="gauge-progress"
-                d="M 20 100 A 80 80 0 0 1 180 100"
+                d="M20 100 A80 80 0 0 1 180 100"
                 pathLength="100"
                 fill="none"
-                stroke="${widget.color}"
+                stroke="${widget.normalColor}"
                 stroke-width="15"
                 stroke-linecap="round"
                 stroke-dasharray="100"
@@ -1581,8 +2284,8 @@
           </div>
         `;
 
-        article.querySelector(".level-fill").style.background =
-          widget.color;
+        body.querySelector(".level-fill").style.background =
+          widget.normalColor;
       } else if (widget.type === "verticalLevel") {
         body.innerHTML = `
           <div class="vertical-level">
@@ -1604,25 +2307,80 @@
           </div>
         `;
 
-        article.querySelector(".vertical-fill").style.background =
-          widget.color;
-      } else if (widget.type === "chart") {
+        body.querySelector(".vertical-fill").style.background =
+          widget.normalColor;
+      } else if (CHART_TYPES.includes(widget.type)) {
         body.innerHTML = `
           <div class="chart-container">
-            <canvas aria-label="Grafik data real-time"></canvas>
+            <canvas aria-label="Grafik data"></canvas>
           </div>
         `;
-      } else {
+      } else if (widget.type === "button") {
         body.innerHTML = `
-          <div class="label-value">—</div>
+          <div class="publish-widget">
+            <button
+              class="mqtt-action-button"
+              type="button"
+            ></button>
+            <span class="control-payload"></span>
+          </div>
         `;
 
-        article.querySelector(".label-value").style.color =
-          widget.color;
+        const button =
+          body.querySelector(".mqtt-action-button");
+
+        button.textContent = widget.title;
+        button.style.background = widget.color;
+
+        body.querySelector(".control-payload").textContent =
+          `Payload: ${widget.buttonPayload}`;
+
+        button.addEventListener("click", () => {
+          publishControl(widget, widget.buttonPayload);
+        });
+      } else if (widget.type === "switch") {
+        body.innerHTML = `
+          <div class="publish-widget">
+            <button
+              class="switch-control"
+              type="button"
+              aria-label="Switch"
+            ></button>
+            <span class="switch-text">OFF</span>
+          </div>
+        `;
+
+        widget.switchOn = false;
+
+        body
+          .querySelector(".switch-control")
+          .addEventListener("click", () => {
+            widget.switchOn = !widget.switchOn;
+            updateSwitchUI(widget);
+
+            publishControl(
+              widget,
+              widget.switchOn
+                ? widget.onPayload
+                : widget.offPayload
+            );
+          });
+      } else if (widget.type === "alarm") {
+        body.innerHTML = `
+          <div class="alarm-display">
+            <div class="alarm-light"></div>
+            <div class="alarm-status">AMAN</div>
+            <div class="alarm-detail"></div>
+            <div class="alarm-value"></div>
+          </div>
+        `;
+
+        body.querySelector(".alarm-detail").textContent =
+          `Alarm jika nilai ${widget.alarmOperator} ${widget.alarmThreshold}`;
       }
 
       article.querySelectorAll(".unit").forEach(element => {
-        element.textContent = widget.unit || "";
+        element.textContent = widget.unit;
       });
 
       article.querySelectorAll(".level-min").forEach(element => {
@@ -1652,76 +2410,121 @@
         });
 
       widget.el = article;
-      applyWidgetSize(widget);
+      applySize(widget);
       dashboard.appendChild(article);
 
-      if (widget.type === "chart") {
+      if (CHART_TYPES.includes(widget.type)) {
         initializeChart(widget);
       }
     }
 
-    function initializeChart(widget) {
-      const context = widget.el
-        .querySelector("canvas")
-        .getContext("2d");
+    function updateSwitchUI(widget) {
+      const control =
+        widget.el?.querySelector(".switch-control");
 
-      widget.chart = new Chart(context, {
-        type: "line",
-        data: {
-          labels: [],
-          datasets: [{
-            label: widget.title,
+      if (!control) return;
+
+      control.classList.toggle("on", widget.switchOn);
+
+      widget.el.querySelector(".switch-text").textContent =
+        widget.switchOn ? "ON" : "OFF";
+    }
+
+    function initializeChart(widget) {
+      const multi = MULTI_TYPES.includes(widget.type);
+      const type =
+        ["bar", "multiBar"].includes(widget.type)
+          ? "bar"
+          : "line";
+
+      const datasets = multi
+        ? widget.series.map(series => ({
+            label: series.label,
             data: [],
-            borderColor: widget.color,
-            backgroundColor: `${widget.color}22`,
+            borderColor: series.color,
+            backgroundColor:
+              type === "bar"
+                ? `${series.color}CC`
+                : `${series.color}22`,
             borderWidth: 2,
             pointRadius: 0,
             tension: .3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          interaction: {
-            intersect: false,
-            mode: "index"
+            fill: false,
+            spanGaps: true
+          }))
+        : [{
+            label: widget.title,
+            data: [],
+            borderColor: widget.color,
+            backgroundColor:
+              type === "bar"
+                ? `${widget.color}CC`
+                : `${widget.color}22`,
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: .3,
+            fill: type === "line"
+          }];
+
+      const style =
+        getComputedStyle(document.documentElement);
+
+      const text =
+        style.getPropertyValue("--muted").trim();
+
+      const grid =
+        style.getPropertyValue("--grid").trim();
+
+      widget.chart = new Chart(
+        widget.el.querySelector("canvas"),
+        {
+          type,
+          data: {
+            labels: [],
+            datasets
           },
-          plugins: {
-            legend: {
-              display: false
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            interaction: {
+              intersect: false,
+              mode: "index"
             },
-            tooltip: {
-              callbacks: {
-                label: context =>
-                  `${formatNumber(context.parsed.y)} ${widget.unit || ""}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: "#8fa5bd",
-                maxTicksLimit: 5
-              },
-              grid: {
-                color: "rgba(143,165,189,.08)"
+            plugins: {
+              legend: {
+                display: multi,
+                labels: {
+                  color: text,
+                  boxWidth: 12,
+                  usePointStyle: true
+                }
               }
             },
-            y: {
-              min: widget.min,
-              max: widget.max,
-              ticks: {
-                color: "#8fa5bd"
+            scales: {
+              x: {
+                ticks: {
+                  color: text,
+                  maxTicksLimit: 5
+                },
+                grid: {
+                  color: grid
+                }
               },
-              grid: {
-                color: "rgba(143,165,189,.1)"
+              y: {
+                min: widget.min,
+                max: widget.max,
+                ticks: {
+                  color: text
+                },
+                grid: {
+                  color: grid
+                }
               }
             }
           }
         }
-      });
+      );
     }
 
     function renderDashboard() {
@@ -1737,263 +2540,261 @@
         empty.className = "empty-state";
 
         const content = document.createElement("div");
-        content.innerHTML = `
-          <div class="empty-state-icon">📡</div>
-          <h2>Belum ada widget</h2>
-          <p>Tambahkan widget untuk mulai memonitor data IoT.</p>
-        `;
+
+        const heading = document.createElement("h2");
+        heading.textContent = "Belum ada widget";
+
+        const text = document.createElement("p");
+        text.textContent =
+          "Tambahkan widget untuk memulai.";
+        text.style.margin = "10px 0 18px";
 
         const button = document.createElement("button");
         button.className = "btn";
         button.type = "button";
         button.textContent = "+ Tambah Widget";
-        button.addEventListener("click", () => {
-          openWidgetDialog();
-        });
+        button.addEventListener(
+          "click",
+          () => openWidgetDialog()
+        );
 
-        content.appendChild(button);
+        content.append(heading, text, button);
         empty.appendChild(content);
         dashboard.appendChild(empty);
         return;
       }
 
-      state.widgets.forEach(createWidgetElement);
+      state.widgets.forEach(createWidget);
     }
 
-    function openWidgetDialog(widget = null) {
-      $("#widgetForm").reset();
+    /* ================= DATA PROCESSING ================= */
 
-      $("#widgetId").value = widget?.id || "";
-      $("#dialogTitle").textContent =
-        widget ? "Edit Widget" : "Tambah Widget";
-      $("#widgetTitle").value = widget?.title || "";
-      $("#widgetType").value = widget?.type || "gauge";
-      $("#widgetTopic").value = widget?.topic || "";
-      $("#widgetMin").value = widget?.min ?? 0;
-      $("#widgetMax").value = widget?.max ?? 100;
-      $("#widgetUnit").value = widget?.unit || "";
-      $("#widgetColor").value = widget?.color || "#22d3ee";
-      $("#widgetIcon").value =
-        widget?.icon || defaultIcon("gauge");
-
-      // Jenis tidak diubah saat edit agar data grafik tetap konsisten.
-      $("#widgetType").disabled = Boolean(widget);
-
-      widgetDialog.showModal();
-      $("#widgetTitle").focus();
-    }
-
-    function closeDialog(id) {
-      const dialog = document.getElementById(id);
-      dialog?.close();
-
-      if (id === "widgetDialog") {
-        $("#widgetType").disabled = false;
-      }
-    }
-
-    function deleteWidget(id) {
-      const widget = state.widgets.find(item => item.id === id);
-
-      if (
-        !widget ||
-        !confirm(`Hapus widget "${widget.title}"?`)
-      ) {
-        return;
-      }
-
-      state.widgets = state.widgets.filter(
-        item => item.id !== id
-      );
-
-      saveWidgets();
-      renderDashboard();
-      syncSubscriptions();
-      showToast("Widget berhasil dihapus.");
-    }
-
-    /*
-      Resize menggunakan Pointer Events sehingga dapat digunakan
-      dengan mouse maupun perangkat sentuh.
-    */
-    function startResize(event, widget) {
-      if (window.innerWidth <= 1100) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const handle = event.currentTarget;
-      const element = widget.el;
-      const startX = event.clientX;
-      const startY = event.clientY;
-      const startW = widget.w;
-      const startH = widget.h;
-
-      const columnWidth =
-        (dashboard.clientWidth - 16 * 11) / 12;
-
-      handle.setPointerCapture(event.pointerId);
-      element.classList.add("resizing");
-
-      function onMove(moveEvent) {
-        const deltaX = moveEvent.clientX - startX;
-        const deltaY = moveEvent.clientY - startY;
-
-        widget.w = Math.max(
-          2,
-          Math.min(
-            12,
-            Math.round(startW + deltaX / (columnWidth + 16))
-          )
+    function getPath(object, path) {
+      return String(path || "value")
+        .split(".")
+        .reduce(
+          (value, key) => value?.[key],
+          object
         );
-
-        // Satu baris grid = 8px + row-gap 8px.
-        widget.h = Math.max(
-          20,
-          Math.min(
-            60,
-            Math.round(startH + deltaY / 16)
-          )
-        );
-
-        applyWidgetSize(widget);
-        widget.chart?.resize();
-      }
-
-      function onEnd() {
-        element.classList.remove("resizing");
-
-        handle.removeEventListener("pointermove", onMove);
-        handle.removeEventListener("pointerup", onEnd);
-        handle.removeEventListener("pointercancel", onEnd);
-
-        saveWidgets();
-        widget.chart?.resize();
-      }
-
-      handle.addEventListener("pointermove", onMove);
-      handle.addEventListener("pointerup", onEnd);
-      handle.addEventListener("pointercancel", onEnd);
     }
 
-    function extractPayload(raw) {
-      let display = raw.trim();
+    function extractValue(widget, raw) {
+      if (widget.dataFormat === "plain") {
+        return raw.trim();
+      }
 
       try {
-        const parsed = JSON.parse(raw);
-
-        if (
-          typeof parsed === "number" ||
-          typeof parsed === "string"
-        ) {
-          display = String(parsed);
-        } else if (parsed && typeof parsed === "object") {
-          const candidate =
-            parsed.value ?? parsed.val ?? parsed.data;
-
-          if (candidate !== undefined) {
-            display =
-              typeof candidate === "object"
-                ? JSON.stringify(candidate)
-                : String(candidate);
-          }
-        }
+        const object = JSON.parse(raw);
+        return getPath(object, widget.jsonKey);
       } catch {
-        // Payload bukan JSON, gunakan teks aslinya.
+        return undefined;
       }
-
-      const numeric =
-        display !== "" ? Number(display) : NaN;
-
-      return {
-        display,
-        numeric
-      };
     }
 
-    function updateWidget(widget, raw) {
-      const { display, numeric } = extractPayload(raw);
-      const numericWidget = [
-        "gauge",
-        "level",
-        "verticalLevel",
-        "chart"
-      ].includes(widget.type);
-
-      if (!widget.el) return;
-
-      if (numericWidget && !Number.isFinite(numeric)) {
-        widget.el.querySelector(".widget-state").textContent =
-          "Payload harus numerik";
-        return;
+    function levelColor(widget, value) {
+      if (value >= widget.dangerAt) {
+        return widget.dangerColor;
       }
 
-      if (widget.type === "label") {
-        widget.el.querySelector(".label-value").textContent =
-          `${display || "—"}${widget.unit ? ` ${widget.unit}` : ""}`;
+      if (value >= widget.warnAt) {
+        return widget.warningColor;
       }
 
-      if (
-        widget.type === "gauge" ||
-        widget.type === "level" ||
-        widget.type === "verticalLevel"
-      ) {
-        const range = widget.max - widget.min;
-        const percentage = range > 0
-          ? Math.max(
-              0,
-              Math.min(
-                100,
-                ((numeric - widget.min) / range) * 100
-              )
-            )
-          : 0;
+      return widget.normalColor;
+    }
 
-        widget.el.querySelector(".numeric-value").textContent =
-          formatNumber(numeric);
+    function compareAlarm(actual, operator, expected) {
+      const actualNumber = Number(actual);
+      const expectedNumber = Number(expected);
 
-        if (widget.type === "gauge") {
-          widget.el
-            .querySelector(".gauge-progress")
-            .setAttribute(
-              "stroke-dashoffset",
-              String(100 - percentage)
-            );
-        } else if (widget.type === "level") {
-          widget.el.querySelector(".level-fill").style.width =
-            `${percentage}%`;
-        } else {
-          widget.el.querySelector(".vertical-fill").style.height =
-            `${percentage}%`;
-        }
+      const numeric =
+        actual !== "" &&
+        expected !== "" &&
+        Number.isFinite(actualNumber) &&
+        Number.isFinite(expectedNumber);
+
+      const a = numeric ? actualNumber : String(actual);
+      const b = numeric ? expectedNumber : String(expected);
+
+      switch (operator) {
+        case ">": return a > b;
+        case ">=": return a >= b;
+        case "<": return a < b;
+        case "<=": return a <= b;
+        case "==": return a == b;
+        case "!=": return a != b;
+        default: return false;
       }
+    }
 
-      if (widget.type === "chart" && widget.chart) {
-        const chart = widget.chart;
-        const dataset = chart.data.datasets[0];
+    function trimChart(chart) {
+      if (chart.data.labels.length <= MAX_POINTS) return;
 
-        chart.data.labels.push(
-          new Date().toLocaleTimeString("id-ID")
-        );
-        dataset.data.push(numeric);
+      chart.data.labels.shift();
 
-        if (dataset.data.length > MAX_CHART_POINTS) {
-          dataset.data.shift();
-          chart.data.labels.shift();
-        }
+      chart.data.datasets.forEach(dataset => {
+        dataset.data.shift();
+      });
+    }
 
-        chart.update("none");
-      }
-
+    function markUpdated(widget, message = "Data diterima") {
       widget.el.querySelector(".widget-state").textContent =
-        "Data diterima";
+        message;
+
       widget.el.querySelector(".last-update").textContent =
         new Date().toLocaleTimeString("id-ID");
     }
 
+    function updateMultiWidget(widget, topic, raw) {
+      if (!widget.chart) return;
+
+      let object;
+
+      try {
+        object = JSON.parse(raw);
+      } catch {
+        widget.el.querySelector(".widget-state").textContent =
+          "JSON tidak valid";
+        return;
+      }
+
+      let updated = false;
+
+      widget.series.forEach(series => {
+        if (!topicMatches(series.topic, topic)) return;
+
+        const value = Number(getPath(object, series.key));
+
+        if (Number.isFinite(value)) {
+          series.lastValue = value;
+          updated = true;
+        }
+      });
+
+      if (!updated) {
+        widget.el.querySelector(".widget-state").textContent =
+          "Key numerik tidak ditemukan";
+        return;
+      }
+
+      widget.chart.data.labels.push(
+        new Date().toLocaleTimeString("id-ID")
+      );
+
+      widget.series.forEach((series, index) => {
+        widget.chart.data.datasets[index].data.push(
+          Number.isFinite(series.lastValue)
+            ? series.lastValue
+            : null
+        );
+      });
+
+      trimChart(widget.chart);
+      widget.chart.update("none");
+      markUpdated(widget, `Data dari ${topic}`);
+    }
+
+    function updateSingleWidget(widget, raw) {
+      const value = extractValue(widget, raw);
+
+      if (value === undefined || value === null) {
+        widget.el.querySelector(".widget-state").textContent =
+          "Data/key tidak ditemukan";
+        return;
+      }
+
+      if (widget.type === "label") {
+        const text =
+          typeof value === "object"
+            ? JSON.stringify(value)
+            : String(value);
+
+        widget.el.querySelector(".label-value").textContent =
+          `${text}${widget.unit ? ` ${widget.unit}` : ""}`;
+      } else if (widget.type === "alarm") {
+        const active = compareAlarm(
+          value,
+          widget.alarmOperator,
+          widget.alarmThreshold
+        );
+
+        const display =
+          widget.el.querySelector(".alarm-display");
+
+        display.classList.toggle("active", active);
+
+        display.querySelector(".alarm-status").textContent =
+          active ? "ALARM" : "AMAN";
+
+        display.querySelector(".alarm-value").textContent =
+          `Nilai: ${value} ${widget.unit}`;
+      } else {
+        const numeric = Number(value);
+
+        if (!Number.isFinite(numeric)) {
+          widget.el.querySelector(".widget-state").textContent =
+            "Payload harus numerik";
+          return;
+        }
+
+        if (CHART_TYPES.includes(widget.type)) {
+          widget.chart.data.labels.push(
+            new Date().toLocaleTimeString("id-ID")
+          );
+
+          widget.chart.data.datasets[0].data.push(numeric);
+
+          trimChart(widget.chart);
+          widget.chart.update("none");
+        } else if (LEVEL_TYPES.includes(widget.type)) {
+          const range = widget.max - widget.min;
+
+          const percentage = Math.max(
+            0,
+            Math.min(
+              100,
+              ((numeric - widget.min) / range) * 100
+            )
+          );
+
+          const color = levelColor(widget, numeric);
+
+          widget.el.querySelector(
+            ".numeric-value"
+          ).textContent = formatNumber(numeric);
+
+          if (widget.type === "gauge") {
+            const progress =
+              widget.el.querySelector(".gauge-progress");
+
+            progress.setAttribute(
+              "stroke-dashoffset",
+              String(100 - percentage)
+            );
+
+            progress.setAttribute("stroke", color);
+          } else if (widget.type === "level") {
+            const fill =
+              widget.el.querySelector(".level-fill");
+
+            fill.style.width = `${percentage}%`;
+            fill.style.background = color;
+          } else {
+            const fill =
+              widget.el.querySelector(".vertical-fill");
+
+            fill.style.height = `${percentage}%`;
+            fill.style.background = color;
+          }
+        }
+      }
+
+      markUpdated(widget);
+    }
+
     function topicMatches(filter, topic) {
-      const filterParts = filter.split("/");
-      const topicParts = topic.split("/");
+      const filterParts = String(filter).split("/");
+      const topicParts = String(topic).split("/");
 
       for (let i = 0; i < filterParts.length; i++) {
         if (filterParts[i] === "#") {
@@ -2001,14 +2802,21 @@
         }
 
         if (i >= topicParts.length) return false;
-        if (filterParts[i] === "+") continue;
-        if (filterParts[i] !== topicParts[i]) return false;
+
+        if (
+          filterParts[i] !== "+" &&
+          filterParts[i] !== topicParts[i]
+        ) {
+          return false;
+        }
       }
 
       return filterParts.length === topicParts.length;
     }
 
-    function addChatMessage(direction, topic, payload) {
+    /* ================= CHAT & PUBLISH ================= */
+
+    function addChat(direction, topic, payload) {
       const container = $("#chatMessages");
       container.querySelector(".chat-empty")?.remove();
 
@@ -2032,33 +2840,85 @@
       message.append(topicElement, bubble, time);
       container.appendChild(message);
 
-      while (container.children.length > MAX_CHAT_MESSAGES) {
+      while (container.children.length > MAX_CHAT) {
         container.firstElementChild.remove();
       }
 
       container.scrollTop = container.scrollHeight;
     }
 
+    function publishControl(widget, payload) {
+      if (!state.connected || !state.client) {
+        showToast(
+          "Hubungkan broker terlebih dahulu.",
+          "error"
+        );
+        return;
+      }
+
+      if (!widget.controlTopic) {
+        showToast(
+          "Topik publish belum dikonfigurasi.",
+          "error"
+        );
+        return;
+      }
+
+      state.client.publish(
+        widget.controlTopic,
+        payload,
+        {
+          qos: widget.controlQos,
+          retain: widget.controlRetain
+        },
+        error => {
+          if (error) {
+            showToast(
+              `Publish gagal: ${error.message}`,
+              "error"
+            );
+            return;
+          }
+
+          addChat(
+            "outgoing",
+            widget.controlTopic,
+            payload
+          );
+
+          markUpdated(widget, "Perintah terkirim");
+        }
+      );
+    }
+
+    /* ================= MQTT ================= */
+
     function syncSubscriptions() {
       if (!state.connected || !state.client) return;
 
-      const topics = new Set(
-        state.widgets
-          .map(widget => widget.topic)
-          .filter(Boolean)
-      );
+      const topics = new Set();
 
-      const newTopics = [...topics].filter(
+      state.widgets.forEach(widget => {
+        if (MULTI_TYPES.includes(widget.type)) {
+          widget.series.forEach(series => {
+            if (series.topic) topics.add(series.topic);
+          });
+        } else if (widget.topic) {
+          topics.add(widget.topic);
+        }
+      });
+
+      const added = [...topics].filter(
         topic => !state.subscribed.has(topic)
       );
 
-      const removedTopics = [...state.subscribed].filter(
+      const removed = [...state.subscribed].filter(
         topic => !topics.has(topic)
       );
 
-      if (newTopics.length) {
+      if (added.length) {
         state.client.subscribe(
-          newTopics,
+          added,
           { qos: 0 },
           error => {
             if (error) {
@@ -2067,7 +2927,7 @@
                 "error"
               );
             } else {
-              newTopics.forEach(topic => {
+              added.forEach(topic => {
                 state.subscribed.add(topic);
               });
             }
@@ -2075,9 +2935,9 @@
         );
       }
 
-      if (removedTopics.length) {
-        state.client.unsubscribe(removedTopics, () => {
-          removedTopics.forEach(topic => {
+      if (removed.length) {
+        state.client.unsubscribe(removed, () => {
+          removed.forEach(topic => {
             state.subscribed.delete(topic);
           });
         });
@@ -2089,7 +2949,7 @@
 
       if (!/^wss?:\/\//i.test(url)) {
         showToast(
-          "URL broker harus diawali ws:// atau wss://",
+          "URL harus diawali ws:// atau wss://",
           "error"
         );
         return;
@@ -2097,14 +2957,15 @@
 
       if (typeof mqtt === "undefined") {
         showToast(
-          "Library MQTT gagal dimuat. Periksa koneksi internet.",
+          "Library MQTT gagal dimuat.",
           "error"
         );
         return;
       }
 
       setStatus("connecting", "Menghubungkan…");
-      $("#connectBtn").textContent = "Batalkan / Putuskan";
+      $("#connectBtn").textContent =
+        "Batalkan / Putuskan";
 
       const client = mqtt.connect(url, {
         clientId:
@@ -2128,25 +2989,42 @@
         state.subscribed.clear();
 
         setStatus("connected", "Terhubung");
-        $("#connectBtn").textContent = "Putuskan Koneksi";
+        $("#connectBtn").textContent =
+          "Putuskan Koneksi";
 
         syncSubscriptions();
-        showToast("Berhasil terhubung ke broker MQTT.");
+        showToast("Berhasil terhubung ke broker.");
       });
 
       client.on("message", (topic, payload) => {
         const raw = payload.toString();
+        addChat("incoming", topic, raw);
 
-        addChatMessage("incoming", topic, raw);
+        state.widgets.forEach(widget => {
+          if (MULTI_TYPES.includes(widget.type)) {
+            const matches = widget.series.some(
+              series => topicMatches(series.topic, topic)
+            );
 
-        state.widgets
-          .filter(widget => topicMatches(widget.topic, topic))
-          .forEach(widget => updateWidget(widget, raw));
+            if (matches) {
+              updateMultiWidget(widget, topic, raw);
+            }
+          } else if (
+            widget.topic &&
+            topicMatches(widget.topic, topic)
+          ) {
+            updateSingleWidget(widget, raw);
+          }
+        });
       });
 
       client.on("reconnect", () => {
-        if (state.client !== client) return;
-        setStatus("connecting", "Menghubungkan ulang…");
+        if (state.client === client) {
+          setStatus(
+            "connecting",
+            "Menghubungkan ulang…"
+          );
+        }
       });
 
       client.on("close", () => {
@@ -2158,10 +3036,12 @@
       });
 
       client.on("error", error => {
-        if (state.client !== client) return;
-
-        console.error("MQTT error:", error);
-        showToast(`MQTT: ${error.message}`, "error");
+        if (state.client === client) {
+          showToast(
+            `MQTT: ${error.message}`,
+            "error"
+          );
+        }
       });
     }
 
@@ -2177,10 +3057,393 @@
       client.end(true);
 
       setStatus("", "Belum terhubung");
-      $("#connectBtn").textContent = "Hubungkan ke Broker";
+      $("#connectBtn").textContent =
+        "Hubungkan ke Broker";
     }
 
-    /* ===================== EVENT ===================== */
+    /* ================= RESIZE ================= */
+
+    function startResize(event, widget) {
+      if (window.innerWidth <= 1100) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const handle = event.currentTarget;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startW = widget.w;
+      const startH = widget.h;
+
+      const columnWidth =
+        (dashboard.clientWidth - 16 * 11) / 12;
+
+      handle.setPointerCapture(event.pointerId);
+      widget.el.classList.add("resizing");
+
+      function move(moveEvent) {
+        widget.w = Math.max(
+          2,
+          Math.min(
+            12,
+            Math.round(
+              startW +
+              (moveEvent.clientX - startX) /
+              (columnWidth + 16)
+            )
+          )
+        );
+
+        widget.h = Math.max(
+          10,
+          Math.min(
+            60,
+            Math.round(
+              startH +
+              (moveEvent.clientY - startY) / 16
+            )
+          )
+        );
+
+        applySize(widget);
+        widget.chart?.resize();
+      }
+
+      function end() {
+        widget.el.classList.remove("resizing");
+
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", end);
+        handle.removeEventListener("pointercancel", end);
+
+        saveWidgets();
+        widget.chart?.resize();
+      }
+
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", end);
+      handle.addEventListener("pointercancel", end);
+    }
+
+    /* ================= SERIES FORM ================= */
+
+    function addSeriesRow(series = {}) {
+      const row = document.createElement("div");
+      row.className = "series-row";
+
+      row.innerHTML = `
+        <div class="series-row-header">
+          <h4>Series</h4>
+          <button
+            class="btn-icon remove-series"
+            type="button"
+            title="Hapus series"
+          >✕</button>
+        </div>
+
+        <div class="series-grid">
+          <div class="field series-topic">
+            <label>Topic subscribe</label>
+            <input
+              class="series-topic-input"
+              placeholder="demo/iot/suhu"
+            >
+          </div>
+
+          <div class="field">
+            <label>JSON key/path</label>
+            <input
+              class="series-key-input"
+              placeholder="value atau sensor.suhu"
+            >
+          </div>
+
+          <div class="field">
+            <label>Label</label>
+            <input
+              class="series-label-input"
+              placeholder="Suhu Ruangan"
+            >
+          </div>
+
+          <div class="field">
+            <label>Warna series</label>
+            <input
+              class="series-color-input"
+              type="color"
+            >
+          </div>
+        </div>
+      `;
+
+      const index = $("#seriesList").children.length;
+
+      row.querySelector(".series-topic-input").value =
+        series.topic || "";
+
+      row.querySelector(".series-key-input").value =
+        series.key || "value";
+
+      row.querySelector(".series-label-input").value =
+        series.label || "";
+
+      row.querySelector(".series-color-input").value =
+        safeColor(
+          series.color,
+          SERIES_COLORS[index % SERIES_COLORS.length]
+        );
+
+      row
+        .querySelector(".remove-series")
+        .addEventListener("click", () => {
+          row.remove();
+          renumberSeriesRows();
+        });
+
+      $("#seriesList").appendChild(row);
+      renumberSeriesRows();
+    }
+
+    function renumberSeriesRows() {
+      [...$("#seriesList").children].forEach(
+        (row, index) => {
+          row.querySelector("h4").textContent =
+            `Series ${index + 1}`;
+        }
+      );
+    }
+
+    function readSeriesRows() {
+      return [...$("#seriesList").children].map(
+        (row, index) => ({
+          topic: row
+            .querySelector(".series-topic-input")
+            .value.trim(),
+
+          key: row
+            .querySelector(".series-key-input")
+            .value.trim(),
+
+          label:
+            row
+              .querySelector(".series-label-input")
+              .value.trim() ||
+            `Data ${index + 1}`,
+
+          color: row
+            .querySelector(".series-color-input")
+            .value
+        })
+      );
+    }
+
+    /* ================= WIDGET FORM ================= */
+
+    function updateFormSections() {
+      const type = $("#widgetType").value;
+
+      const singleData =
+        SINGLE_DATA_TYPES.includes(type);
+
+      const multi = MULTI_TYPES.includes(type);
+      const control = CONTROL_TYPES.includes(type);
+
+      const numeric = [
+        "gauge",
+        "level",
+        "verticalLevel",
+        "line",
+        "bar",
+        "multiLine",
+        "multiBar"
+      ].includes(type);
+
+      $("#subscribeSection").hidden =
+        !(singleData || multi);
+
+      $("#singleTopicField").hidden = multi;
+      $("#formatField").hidden = multi;
+      $("#seriesSection").hidden = !multi;
+      $("#numericSection").hidden = !numeric;
+
+      $("#thresholdSection").hidden =
+        !LEVEL_TYPES.includes(type);
+
+      $("#alarmSection").hidden =
+        type !== "alarm";
+
+      $("#publishSection").hidden = !control;
+
+      $("#dataFormat").disabled = multi;
+
+      if (multi) {
+        $("#dataFormat").value = "json";
+
+        if (!$("#seriesList").children.length) {
+          addSeriesRow({
+            key: "suhu",
+            label: "Suhu",
+            color: "#0EA5E9"
+          });
+
+          addSeriesRow({
+            key: "kelembapan",
+            label: "Kelembapan",
+            color: "#10B981"
+          });
+        }
+      }
+
+      const singleJson =
+        singleData &&
+        $("#dataFormat").value === "json";
+
+      $("#jsonKeyField").hidden = !singleJson;
+      $("#singleJsonHint").hidden = !singleJson;
+      $("#multiSourceHint").hidden = !multi;
+
+      $("#buttonPayloadField").hidden =
+        type !== "button";
+
+      $("#onPayloadField").hidden =
+        type !== "switch";
+
+      $("#offPayloadField").hidden =
+        type !== "switch";
+    }
+
+    function openWidgetDialog(widget = null) {
+      $("#widgetForm").reset();
+      $("#seriesList").innerHTML = "";
+
+      $("#widgetId").value = widget?.id || "";
+
+      $("#dialogTitle").textContent =
+        widget ? "Edit Widget" : "Tambah Widget";
+
+      $("#widgetTitle").value =
+        widget?.title || "";
+
+      $("#widgetType").value =
+        widget?.type || "gauge";
+
+      $("#showName").checked =
+        widget?.showName ?? true;
+
+      $("#showIcon").checked =
+        widget?.showIcon ?? true;
+
+      $("#showTopic").checked =
+        widget?.showTopic ?? true;
+
+      $("#widgetTopic").value =
+        widget?.topic || "";
+
+      $("#dataFormat").value =
+        widget?.dataFormat || "plain";
+
+      $("#jsonKey").value =
+        widget?.jsonKey || "value";
+
+      $("#widgetIcon").value =
+        widget?.icon || defaultIcon("gauge");
+
+      $("#widgetColor").value =
+        widget?.color || "#0EA5E9";
+
+      $("#widgetMin").value =
+        widget?.min ?? 0;
+
+      $("#widgetMax").value =
+        widget?.max ?? 100;
+
+      $("#widgetUnit").value =
+        widget?.unit || "";
+
+      $("#warnAt").value =
+        widget?.warnAt ?? 60;
+
+      $("#dangerAt").value =
+        widget?.dangerAt ?? 80;
+
+      $("#normalColor").value =
+        widget?.normalColor || "#10B981";
+
+      $("#warningColor").value =
+        widget?.warningColor || "#F59E0B";
+
+      $("#dangerColor").value =
+        widget?.dangerColor || "#EF4444";
+
+      $("#alarmOperator").value =
+        widget?.alarmOperator || ">";
+
+      $("#alarmThreshold").value =
+        widget?.alarmThreshold || "30";
+
+      $("#controlTopic").value =
+        widget?.controlTopic || "";
+
+      $("#buttonPayload").value =
+        widget?.buttonPayload || "ON";
+
+      $("#onPayload").value =
+        widget?.onPayload || "ON";
+
+      $("#offPayload").value =
+        widget?.offPayload || "OFF";
+
+      $("#controlQos").value =
+        widget?.controlQos || 0;
+
+      $("#controlRetain").checked =
+        widget?.controlRetain || false;
+
+      if (widget && MULTI_TYPES.includes(widget.type)) {
+        widget.series.forEach(series => {
+          addSeriesRow(series);
+        });
+      }
+
+      updateFormSections();
+      $("#widgetDialog").showModal();
+      $("#widgetTitle").focus();
+    }
+
+    function closeDialog(id) {
+      document.getElementById(id)?.close();
+    }
+
+    function deleteWidget(id) {
+      const widget = state.widgets.find(
+        item => item.id === id
+      );
+
+      if (
+        !widget ||
+        !confirm(`Hapus widget "${widget.title}"?`)
+      ) {
+        return;
+      }
+
+      state.widgets = state.widgets.filter(
+        item => item.id !== id
+      );
+
+      saveWidgets();
+      renderDashboard();
+      syncSubscriptions();
+    }
+
+    /* ================= EVENTS ================= */
+
+    $("#themeBtn").addEventListener("click", () => {
+      applyTheme(
+        document.documentElement.dataset.theme === "dark"
+          ? "light"
+          : "dark"
+      );
+    });
 
     $("#openBrokerBtn").addEventListener("click", () => {
       $("#brokerDialog").showModal();
@@ -2192,7 +3455,6 @@
 
     $("#openChatBtn").addEventListener("click", () => {
       $("#chatDialog").showModal();
-      $("#publishTopic").focus();
     });
 
     $("#addWidgetBtn").addEventListener("click", () => {
@@ -2206,15 +3468,6 @@
           closeDialog(button.dataset.dialog);
         });
       });
-
-    // Klik backdrop untuk menutup dialog.
-    document.querySelectorAll("dialog").forEach(dialog => {
-      dialog.addEventListener("click", event => {
-        if (event.target === dialog) {
-          closeDialog(dialog.id);
-        }
-      });
-    });
 
     $("#brokerForm").addEventListener("submit", event => {
       event.preventDefault();
@@ -2231,7 +3484,7 @@
 
       if (!state.connected || !state.client) {
         showToast(
-          "Hubungkan ke broker terlebih dahulu.",
+          "Hubungkan broker terlebih dahulu.",
           "error"
         );
         return;
@@ -2239,14 +3492,6 @@
 
       const topic = $("#publishTopic").value.trim();
       const payload = $("#publishPayload").value;
-
-      if (!topic) {
-        showToast(
-          "Topik publish tidak boleh kosong.",
-          "error"
-        );
-        return;
-      }
 
       state.client.publish(
         topic,
@@ -2262,40 +3507,99 @@
               "error"
             );
           } else {
-            addChatMessage("outgoing", topic, payload);
+            addChat("outgoing", topic, payload);
             $("#publishPayload").value = "";
-            $("#publishPayload").focus();
           }
         }
       );
     });
 
-    // Enter mengirim pesan, Shift+Enter membuat baris baru.
-    $("#publishPayload").addEventListener("keydown", event => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        $("#publishForm").requestSubmit();
+    $("#publishPayload").addEventListener(
+      "keydown",
+      event => {
+        if (
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+          $("#publishForm").requestSubmit();
+        }
       }
-    });
+    );
 
     $("#widgetType").addEventListener("change", () => {
       $("#widgetIcon").value =
         defaultIcon($("#widgetType").value);
+
+      updateFormSections();
+    });
+
+    $("#dataFormat").addEventListener(
+      "change",
+      updateFormSections
+    );
+
+    $("#addSeriesBtn").addEventListener("click", () => {
+      addSeriesRow();
     });
 
     $("#widgetForm").addEventListener("submit", event => {
       event.preventDefault();
 
       const id = $("#widgetId").value;
+      const type = $("#widgetType").value;
+      const title = $("#widgetTitle").value.trim();
+      const topic = $("#widgetTopic").value.trim();
+
       const min = Number($("#widgetMin").value);
       const max = Number($("#widgetMax").value);
-      const topic = $("#widgetTopic").value.trim();
-      const type = $("#widgetType").value;
+      const warnAt = Number($("#warnAt").value);
+      const dangerAt = Number($("#dangerAt").value);
+
+      const existing = state.widgets.find(
+        widget => widget.id === id
+      );
+
+      const singleData =
+        SINGLE_DATA_TYPES.includes(type);
+
+      const multi = MULTI_TYPES.includes(type);
+      const control = CONTROL_TYPES.includes(type);
+
+      const numeric = [
+        "gauge",
+        "level",
+        "verticalLevel",
+        "line",
+        "bar",
+        "multiLine",
+        "multiBar"
+      ].includes(type);
+
+      if (singleData && !topic) {
+        showToast(
+          "Topik subscribe wajib diisi.",
+          "error"
+        );
+        return;
+      }
 
       if (
-        !Number.isFinite(min) ||
-        !Number.isFinite(max) ||
-        min >= max
+        control &&
+        !$("#controlTopic").value.trim()
+      ) {
+        showToast(
+          "Topik publish wajib diisi.",
+          "error"
+        );
+        return;
+      }
+
+      if (
+        numeric &&
+        (!Number.isFinite(min) ||
+          !Number.isFinite(max) ||
+          min >= max)
       ) {
         showToast(
           "Nilai minimum harus lebih kecil dari maksimum.",
@@ -2304,38 +3608,95 @@
         return;
       }
 
-      if (!topic) {
-        showToast("Topik tidak boleh kosong.", "error");
+      if (
+        LEVEL_TYPES.includes(type) &&
+        (!Number.isFinite(warnAt) ||
+          !Number.isFinite(dangerAt) ||
+          warnAt >= dangerAt)
+      ) {
+        showToast(
+          "Nilai peringatan harus lebih kecil dari bahaya.",
+          "error"
+        );
         return;
       }
 
-      const existing = state.widgets.find(
-        widget => widget.id === id
-      );
+      let series = [];
+
+      if (multi) {
+        series = readSeriesRows();
+
+        if (!series.length) {
+          showToast(
+            "Tambahkan minimal satu series.",
+            "error"
+          );
+          return;
+        }
+
+        const incomplete = series.some(
+          item => !item.topic || !item.key
+        );
+
+        if (incomplete) {
+          showToast(
+            "Topic dan JSON key setiap series wajib diisi.",
+            "error"
+          );
+          return;
+        }
+      }
 
       const size = existing || defaultSize(type);
 
-      const config = normalizeWidget({
+      const widget = normalizeWidget({
         id: id || uid(),
-        title: $("#widgetTitle").value.trim(),
+        title,
         type,
+
+        showName: $("#showName").checked,
+        showIcon: $("#showIcon").checked,
+        showTopic: $("#showTopic").checked,
+
         topic,
+        dataFormat: $("#dataFormat").value,
+        jsonKey: $("#jsonKey").value.trim(),
+        series,
+
         icon: $("#widgetIcon").value,
-        min,
-        max,
+        min: Number.isFinite(min) ? min : 0,
+        max: Number.isFinite(max) ? max : 100,
         unit: $("#widgetUnit").value.trim(),
         color: $("#widgetColor").value,
+
+        warnAt,
+        dangerAt,
+        normalColor: $("#normalColor").value,
+        warningColor: $("#warningColor").value,
+        dangerColor: $("#dangerColor").value,
+
+        alarmOperator: $("#alarmOperator").value,
+        alarmThreshold: $("#alarmThreshold").value,
+
+        controlTopic: $("#controlTopic").value.trim(),
+        buttonPayload: $("#buttonPayload").value,
+        onPayload: $("#onPayload").value,
+        offPayload: $("#offPayload").value,
+        controlQos: Number($("#controlQos").value),
+        controlRetain: $("#controlRetain").checked,
+
         w: size.w,
         h: size.h
       });
 
       if (existing) {
         const index = state.widgets.findIndex(
-          widget => widget.id === id
+          item => item.id === id
         );
-        state.widgets[index] = config;
+
+        state.widgets[index] = widget;
       } else {
-        state.widgets.push(config);
+        state.widgets.push(widget);
       }
 
       saveWidgets();
@@ -2345,18 +3706,18 @@
 
       showToast(
         existing
-          ? "Widget berhasil diperbarui."
-          : "Widget berhasil ditambahkan."
+          ? "Widget diperbarui."
+          : "Widget ditambahkan."
       );
     });
 
-    // Drag & drop serta penyimpanan urutan.
     new Sortable(dashboard, {
       animation: 160,
       handle: ".drag-handle",
       ghostClass: "sortable-ghost",
       filter: ".resize-handle",
       preventOnFilter: false,
+
       onEnd() {
         const order = [
           ...dashboard.querySelectorAll(".widget")
@@ -2364,19 +3725,25 @@
 
         state.widgets.sort(
           (a, b) =>
-            order.indexOf(a.id) - order.indexOf(b.id)
+            order.indexOf(a.id) -
+            order.indexOf(b.id)
         );
 
         saveWidgets();
       }
     });
 
-    // Inisialisasi.
+    /* ================= INITIALIZATION ================= */
+
     $("#clientId").value =
       `dashboard_${Math.random().toString(16).slice(2, 10)}`;
 
     loadWidgets();
     renderDashboard();
+    applyTheme(
+      document.documentElement.dataset.theme,
+      false
+    );
   </script>
 </body>
 </html>
